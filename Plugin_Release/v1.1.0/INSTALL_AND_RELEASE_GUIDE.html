@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>dba-ops Install Guide</title>
+<style>
+:root{
+  --bg:#f2f5fa;
+  --surface:#ffffff;
+  --surface-2:#f6f9fc;
+  --border:#dde5ef;
+  --border-soft:#e8eef5;
+  --ink:#182238;
+  --ink-soft:#5b6b83;
+  --ink-faint:#8e9db3;
+  --accent:#6f6f71;
+  --accent-ink:#ffffff;
+  --accent-soft:#ececed;
+  --warn-bg:#fdf6e4;
+  --warn-border:#e7ac16;
+  --warn-ink:#7a5210;
+  --crit-bg:#fceeed;
+  --crit-border:#df6259;
+  --crit-ink:#8a2a22;
+  --good-bg:#e9f7f1;
+  --good-border:#2f9e6e;
+  --good-ink:#1c6b48;
+  --info-bg:#eaf1fd;
+  --info-border:#5089e6;
+  --info-ink:#1c4b8f;
+  --shadow: 0 1px 2px rgba(20,30,50,.04), 0 8px 24px -12px rgba(20,30,50,.12);
+  --cat-os:#3b6ea5;
+  --cat-db:#7658d9;
+  --cat-perf:#c2760c;
+  --cat-backup:#1a8f6b;
+  --cat-ma:#0f8b9e;
+  --cat-risk:#c0392b;
+  --cat-flow:#555f6e;
+  --cat-os-fill:#dbe7f5;
+  --cat-db-fill:#e7e1fb;
+  --cat-backup-fill:#dcf3ea;
+  --cat-ma-fill:#d8f0f3;
+  --cat-perf-fill:#faecd6;
+  --cat-risk-fill:#fbdedb;
+  --cat-flow-fill:#e8eaee;
+  --sidebar-w: 292px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b111c; --surface:#121b2c; --surface-2:#0f1728; --border:#26344a; --border-soft:#1c2839;
+    --ink:#e7edf7; --ink-soft:#a9b7cc; --ink-faint:#6c7b95; --accent:#a4a4a6; --accent-ink:#0b111c; --accent-soft:#3a3a3c;
+    --warn-bg:#332912; --warn-border:#d79a1f; --warn-ink:#f3cd7e;
+    --crit-bg:#341714; --crit-border:#d8564a; --crit-ink:#f5a89e;
+    --good-bg:#0f2a1e; --good-border:#3fae7e; --good-ink:#8fdcb3;
+    --info-bg:#101f38; --info-border:#4d7cca; --info-ink:#9bc0f5;
+    --cat-os-fill:#1b2e45; --cat-db-fill:#2a2350; --cat-backup-fill:#123326; --cat-ma-fill:#0f2c32; --cat-perf-fill:#3a2c10; --cat-risk-fill:#3a1a17; --cat-flow-fill:#1c2330;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b111c; --surface:#121b2c; --surface-2:#0f1728; --border:#26344a; --border-soft:#1c2839;
+  --ink:#e7edf7; --ink-soft:#a9b7cc; --ink-faint:#6c7b95; --accent:#a4a4a6; --accent-ink:#0b111c; --accent-soft:#3a3a3c;
+  --warn-bg:#332912; --warn-border:#d79a1f; --warn-ink:#f3cd7e;
+  --crit-bg:#341714; --crit-border:#d8564a; --crit-ink:#f5a89e;
+  --good-bg:#0f2a1e; --good-border:#3fae7e; --good-ink:#8fdcb3;
+  --info-bg:#101f38; --info-border:#4d7cca; --info-ink:#9bc0f5;
+  --cat-os-fill:#1b2e45; --cat-db-fill:#2a2350; --cat-backup-fill:#123326; --cat-ma-fill:#0f2c32; --cat-perf-fill:#3a2c10; --cat-risk-fill:#3a1a17; --cat-flow-fill:#1c2330;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:"Inter","Loma","Noto Sans Thai",system-ui,sans-serif; font-size:15px; line-height:1.6;}
+h1,h2,h3,.brand-name,.badge-num{font-family:"Manrope","Loma","Noto Sans Thai",sans-serif;}
+h1,h2,h3{text-wrap:balance; margin:0; color:var(--ink);}
+code, .mono, .meta-line, table.data td.num, .flow-step .flow-sub{font-family:"IBM Plex Mono","Loma","Noto Sans Thai",monospace;}
+a{color:var(--accent);}
+::selection{background:var(--accent-soft);}
+.shell{display:flex; min-height:100vh;}
+.sidebar{width:var(--sidebar-w); flex:0 0 auto; background:#2a2a2c; color:#cfcfd1; position:fixed; top:0; left:0; bottom:0; overflow-y:auto; padding:22px 16px 32px; z-index:20; transition:transform .25s ease;}
+.sidebar::-webkit-scrollbar{width:8px;}
+.sidebar::-webkit-scrollbar-thumb{background:#47474a; border-radius:8px;}
+.brand{display:flex; align-items:center; gap:10px; padding:4px 8px 18px; border-bottom:1px solid #3a3a3c; margin-bottom:14px;}
+.brand-icon{width:36px; height:36px; border-radius:10px; flex:0 0 auto; background:linear-gradient(145deg, var(--accent), #4a4a4c); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:12px;}
+.brand-name{color:#fff; font-weight:800; font-size:15.5px; line-height:1.25;}
+.brand-sub{color:#9a9a9c; font-size:11.5px; margin-top:2px; letter-spacing:.02em;}
+.nav-group-label{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:#8a8a8c; margin:20px 10px 8px; font-weight:700;}
+.nav-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:none; cursor:pointer; color:#cfcfd1; padding:9px 10px; border-radius:9px; font-size:13.5px; font-family:inherit; line-height:1.35;}
+.nav-item:hover{background:#3a3a3c; color:#fff;}
+.nav-item.active{background:var(--accent); color:#fff;}
+.nav-item.active .nav-dot{box-shadow:0 0 0 3px rgba(255,255,255,.25);}
+.nav-dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:#8a8a8c;}
+.sidebar-toggle{display:none; position:fixed; top:14px; left:14px; z-index:30; background:var(--accent); color:#fff; border:none; border-radius:9px; width:40px; height:40px; font-size:18px; box-shadow:var(--shadow); cursor:pointer;}
+.main{margin-left:var(--sidebar-w); flex:1 1 auto; min-width:0; padding:34px 40px 80px;}
+.content-wrap{max-width:1000px; margin:0 auto;}
+section.panel{display:none;}
+section.panel.active{display:block; animation:fade .25s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+.panel-head{margin-bottom:18px;}
+.head-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.badge-num{width:34px; height:34px; border-radius:50%; background:var(--accent); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; flex:0 0 auto;}
+h1.panel-title{font-size:24px; font-weight:800;}
+.panel-title-th{font-size:14.5px; color:var(--ink-soft); font-weight:600; margin-top:1px;}
+.meta-line{margin-top:10px; font-size:12.5px; color:var(--ink-soft); display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center;}
+.chip{display:inline-flex; align-items:center; gap:5px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:100px; padding:3px 10px; font-size:11.5px; color:var(--ink-soft); font-weight:500;}
+.chip b{color:var(--ink); font-weight:700;}
+.callout{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--warn-border); background:var(--warn-bg); color:var(--warn-ink); border-left-width:4px; border-radius:10px; padding:14px 16px; margin:18px 0;}
+.callout .c-icon{font-size:17px; line-height:1.4;}
+.callout .c-body{flex:1; min-width:0;}
+.callout .c-title{font-weight:700; font-size:13.5px; margin-bottom:3px; color:inherit;}
+.callout .c-text{font-size:13.3px; color:inherit; opacity:.92;}
+.callout .c-tag{flex:0 0 auto; font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:100px; background:rgba(0,0,0,.06); white-space:nowrap;}
+.callout.crit{border-color:var(--crit-border); background:var(--crit-bg); color:var(--crit-ink);}
+.callout.good{border-color:var(--good-border); background:var(--good-bg); color:var(--good-ink);}
+.callout.info{border-color:var(--info-border); background:var(--info-bg); color:var(--info-ink);}
+h2.sec-title{font-size:16px; font-weight:800; margin:30px 0 4px; display:flex; align-items:center; gap:8px;}
+h2.sec-title .idx{color:var(--ink-faint); font-size:12.5px; font-weight:700;}
+p.sec-desc{color:var(--ink-soft); font-size:13.3px; margin:0 0 14px; max-width:74ch;}
+h3.sub-title{font-size:13.8px; font-weight:700; margin:20px 0 8px; color:var(--ink);}
+.grid{display:grid; gap:14px; margin:12px 0;}
+.grid.cols-2{grid-template-columns:repeat(2,1fr);}
+.grid.cols-3{grid-template-columns:repeat(3,1fr);}
+@media (max-width:820px){ .grid.cols-2, .grid.cols-3{grid-template-columns:1fr;} }
+.card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 17px; box-shadow:var(--shadow);}
+.card-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;}
+.card-head h4{font-size:13.8px; font-weight:800; margin:0;}
+.card-tag{font-size:10px; font-weight:700; padding:2px 8px; border-radius:100px; letter-spacing:.02em;}
+.card ul{margin:0; padding-left:18px; font-size:13px; color:var(--ink-soft);}
+.card ul li{margin:5px 0;}
+.card ul li b, .card ul li strong{color:var(--ink);}
+.card .kv{display:flex; justify-content:space-between; gap:10px; font-size:12.8px; padding:6px 0; border-top:1px dashed var(--border-soft);}
+.card .kv:first-of-type{border-top:none;}
+.card .kv .k{color:var(--ink-soft);}
+.card .kv .v{color:var(--ink); font-weight:600; text-align:right;}
+.cat-strip{height:4px; border-radius:4px 4px 0 0; margin:-16px -17px 12px; }
+.cat-os{background:var(--cat-os);} .cat-db{background:var(--cat-db);} .cat-perf{background:var(--cat-perf);}
+.cat-backup{background:var(--cat-backup);} .cat-ma{background:var(--cat-ma);} .cat-risk{background:var(--cat-risk);} .cat-flow{background:var(--cat-flow);}
+.table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:12px; margin:14px 0; box-shadow:var(--shadow);}
+table.data{width:100%; border-collapse:collapse; font-size:13px; background:var(--surface); min-width:560px;}
+table.data.tbl-fixed{table-layout:fixed; min-width:0;}
+table.data.tbl-fixed td, table.data.tbl-fixed th{word-wrap:break-word; overflow-wrap:break-word;}
+table.data.tbl-fixed td.num{white-space:nowrap;}
+table.data.tbl-fixed .pill{font-size:9.5px; padding:2px 6px; white-space:nowrap;}
+table.data th{text-align:left; background:var(--surface-2); color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap;}
+table.data td{padding:10px 14px; border-bottom:1px solid var(--border-soft); color:var(--ink); vertical-align:top;}
+table.data tr:last-child td{border-bottom:none;}
+table.data tr:hover td{background:var(--surface-2);}
+.pill{display:inline-block; font-size:10.5px; font-weight:700; padding:2px 9px; border-radius:100px;}
+.pill.high{background:var(--crit-bg); color:var(--crit-ink);}
+.pill.med{background:var(--warn-bg); color:var(--warn-ink);}
+.pill.low{background:var(--good-bg); color:var(--good-ink);}
+.pill.std{background:var(--info-bg); color:var(--info-ink);}
+code.snip{background:#242426; color:#e4e4e5; border-radius:5px; padding:1.5px 6px; font-size:12px;}
+pre.snip{background:#242426; color:#e4e4e5; border-radius:10px; padding:14px 16px; overflow-x:auto; font-size:12.3px; line-height:1.6; margin:12px 0;}
+pre.snip .cm{color:#b5b5b7;}
+hr.div{border:none; border-top:1px solid var(--border); margin:34px 0;}
+.flow{display:flex; flex-wrap:wrap; align-items:stretch; gap:0; margin:16px 0;}
+.flow-step{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 13px; width:172px; box-shadow:var(--shadow);}
+.flow-step .flow-n{font-size:10.5px; font-weight:800; color:#fff; background:var(--accent); border-radius:100px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:7px;}
+.flow-step .flow-t{font-size:12.3px; font-weight:700; margin-bottom:3px;}
+.flow-step .flow-sub{font-size:10.6px; color:var(--ink-soft);}
+.flow-arrow{display:flex; align-items:center; justify-content:center; width:26px; color:var(--ink-faint); font-size:16px; flex:0 0 auto;}
+@media (max-width:900px){ .flow{flex-direction:column;} .flow-step{width:100%;} .flow-arrow{transform:rotate(90deg); width:100%; height:20px;} }
+.footnote{font-size:11.8px; color:var(--ink-faint); margin-top:8px;}
+.src-list{font-size:11.5px; color:var(--ink-faint); margin:6px 0 0; padding-left:16px;}
+.src-list li{margin:2px 0;}
+.src-list a{color:var(--ink-faint); text-decoration:underline;}
+.checklist{list-style:none; margin:10px 0; padding:0; display:grid; gap:7px;}
+.checklist li{display:flex; flex-wrap:wrap; gap:9px; font-size:13px; color:var(--ink-soft); align-items:flex-start;}
+.checklist li::before{content:"☐"; color:var(--ink-faint); flex:0 0 auto; margin-top:1px;}
+.checklist li b{color:var(--ink);}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0); box-shadow:0 0 0 100vmax rgba(0,0,0,.35);}
+  .main{margin-left:0; padding:70px 18px 60px;}
+  .sidebar-toggle{display:block;}
+}
+.sidebar-inner{display:flex; flex-direction:column; min-height:calc(100vh - 54px);}
+.sidebar-footer{margin-top:auto; padding:14px 10px 4px; border-top:1px solid #3a3a3c; font-size:11px; color:#8a8a8c; line-height:1.6;}
+.sidebar-footer b{color:#c2c2c4; font-weight:700;}
+.doc-footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); font-size:11.5px; color:var(--ink-faint); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+.legend-row{display:flex; flex-wrap:wrap; gap:8px 10px; margin:14px 0 18px;}
+.legend-item{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-soft);}
+.legend-dot{width:11px; height:11px; border-radius:3px; flex:0 0 auto; border:1.5px solid transparent;}
+.diagram-frame{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; box-shadow:var(--shadow); overflow-x:auto; margin:10px 0 24px;}
+.diagram-frame svg{display:block; margin:0 auto; max-width:100%; height:auto; min-width:520px;}
+.fd-title{font-weight:700; font-size:11.3px;}
+.fd-sub{font-size:9.3px;}
+.fd-title, .fd-sub{fill:var(--ink); font-family:"Inter","Loma","Noto Sans Thai",sans-serif;}
+.fd-sub{fill:var(--ink-soft);}
+.fd-box{stroke-width:1.6;}
+.fd-os{fill:var(--cat-os-fill); stroke:var(--cat-os);}
+.fd-db{fill:var(--cat-db-fill); stroke:var(--cat-db);}
+.fd-backup{fill:var(--cat-backup-fill); stroke:var(--cat-backup);}
+.fd-ma{fill:var(--cat-ma-fill); stroke:var(--cat-ma);}
+.fd-perf{fill:var(--cat-perf-fill); stroke:var(--cat-perf);}
+.fd-risk{fill:var(--cat-risk-fill); stroke:var(--cat-risk);}
+.fd-flow{fill:var(--cat-flow-fill); stroke:var(--cat-flow);}
+.fd-edge{stroke:var(--ink-faint); stroke-width:1.8; fill:none;}
+.fd-edge-good{stroke:var(--good-border); stroke-width:2; fill:none;}
+.fd-edge-crit{stroke:var(--crit-border); stroke-width:2; fill:none; stroke-dasharray:6,4;}
+.fd-edge-ma{stroke:var(--cat-ma); stroke-width:2; fill:none; stroke-dasharray:4,4;}
+.fd-edge-label{font-size:9.5px; font-weight:700; font-family:"IBM Plex Mono",monospace;}
+.fd-label-good{fill:var(--good-ink);}
+.fd-label-crit{fill:var(--crit-ink);}
+.fd-label-ma{fill:var(--cat-ma);}
+@media print{
+  .sidebar, .sidebar-toggle{display:none !important;}
+  .main{margin-left:0 !important; padding:0 !important;}
+  .content-wrap{max-width:100% !important;}
+  section.panel{display:block !important; page-break-after:always;}
+  section.panel:last-child{page-break-after:auto;}
+  .card, .table-wrap, .diagram-frame, .callout{box-shadow:none !important;}
+  body{background:#fff !important;}
+  .diagram-block{page-break-before:always; page-break-inside:avoid; break-inside:avoid;}
+  .diagram-frame{overflow:visible !important;}
+  .diagram-frame svg{max-width:560px !important; width:560px !important; min-width:0 !important;}
+}
+
+/* ===== Playbook additions ===== */
+.freq{display:inline-block; font-size:10px; font-weight:800; letter-spacing:.04em; padding:2px 8px; border-radius:100px; white-space:nowrap;}
+.freq.d{background:var(--cat-os-fill); color:var(--cat-os);}
+.freq.w{background:var(--cat-db-fill); color:var(--cat-db);}
+.freq.m{background:var(--cat-backup-fill); color:var(--cat-backup);}
+.freq.q{background:var(--cat-perf-fill); color:var(--cat-perf);}
+.freq.y{background:var(--cat-risk-fill); color:var(--cat-risk);}
+.tick{cursor:pointer; user-select:none; width:18px; height:18px; border:1.6px solid var(--ink-faint); border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:transparent; flex:0 0 auto;}
+tr.done .tick{background:var(--good-border); border-color:var(--good-border); color:#fff;}
+tr.done td:not(:first-child){opacity:.55;}
+tr.done td b{text-decoration:line-through;}
+.progress-bar{display:flex; align-items:center; gap:12px; margin:10px 0 4px; font-size:12.5px; color:var(--ink-soft);}
+.progress-track{flex:1; height:8px; background:var(--border-soft); border-radius:8px; overflow:hidden;}
+.progress-fill{height:100%; width:0; background:var(--good-border); transition:width .25s ease;}
+.btn{font-family:inherit; font-size:12px; font-weight:700; border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:8px; padding:5px 12px; cursor:pointer;}
+.btn:hover{background:var(--surface-2);}
+.stage-list{counter-reset:stg; list-style:none; padding:0; margin:14px 0; display:grid; gap:10px;}
+.stage-list > li{counter-increment:stg; position:relative; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px 14px 58px; box-shadow:var(--shadow);}
+.stage-list > li::before{content:counter(stg); position:absolute; left:16px; top:14px; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; font-family:"Manrope",sans-serif;}
+.stage-list .st-t{font-weight:800; font-size:14px; margin-bottom:2px;}
+.stage-list .st-d{font-size:13px; color:var(--ink-soft);}
+.stage-list .st-out{margin-top:6px; font-size:12px; color:var(--ink-soft);}
+.stage-list .st-out b{color:var(--ink);}
+.gate{display:inline-block; font-size:10px; font-weight:800; padding:2px 8px; border-radius:100px; background:var(--crit-bg); color:var(--crit-ink); margin-left:6px; vertical-align:middle;}
+.cookbook{border:1px solid var(--border); border-radius:12px; background:var(--surface); margin:12px 0; box-shadow:var(--shadow); overflow:hidden;}
+.cookbook summary{cursor:pointer; list-style:none; padding:13px 16px; display:flex; align-items:center; gap:10px; font-weight:800; font-size:13.8px;}
+.cookbook summary::-webkit-details-marker{display:none;}
+.cookbook summary::after{content:"＋"; margin-left:auto; color:var(--ink-faint); font-weight:700;}
+.cookbook[open] summary::after{content:"－";}
+.cookbook[open] summary{border-bottom:1px solid var(--border-soft);}
+.cookbook .cb-body{padding:6px 16px 16px;}
+.cookbook .cb-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:10px;}
+@media (max-width:820px){ .cookbook .cb-grid{grid-template-columns:1fr;} }
+.cb-box{border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; background:var(--surface-2);}
+.cb-box h5{margin:0 0 5px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft);}
+.cb-box ul{margin:0; padding-left:17px; font-size:12.8px; color:var(--ink);}
+.cb-box ul li{margin:3px 0;}
+.cb-box.impact{border-color:var(--warn-border); background:var(--warn-bg);}
+.cb-box.impact h5, .cb-box.impact ul{color:var(--warn-ink);}
+.cb-box.rollback{border-color:var(--good-border); background:var(--good-bg);}
+.cb-box.rollback h5, .cb-box.rollback ul{color:var(--good-ink);}
+.week-grid{display:grid; grid-template-columns:110px repeat(7,1fr); gap:4px; font-size:11.5px; margin:14px 0;}
+.week-grid .wh{font-weight:800; text-align:center; color:var(--ink-soft); padding:6px 0; font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
+.week-grid .wl{font-weight:700; color:var(--ink-soft); padding:8px 6px; font-size:11.5px;}
+.week-grid .wc{background:var(--surface); border:1px solid var(--border-soft); border-radius:7px; padding:6px 7px; min-height:44px; color:var(--ink);}
+.week-grid .wc span{display:block; font-size:10.6px; line-height:1.4; margin:2px 0; padding:2px 5px; border-radius:4px;}
+.wc .d{background:var(--cat-os-fill); color:var(--cat-os);}
+.wc .w{background:var(--cat-db-fill); color:var(--cat-db);}
+.wc .m{background:var(--cat-backup-fill); color:var(--cat-backup);}
+@media (max-width:820px){ .week-grid{grid-template-columns:80px repeat(7,minmax(70px,1fr)); overflow-x:auto;} }
+.sev{display:inline-block; min-width:28px; text-align:center; font-weight:800; font-size:11px; padding:2px 8px; border-radius:6px;}
+.sev.p1{background:var(--crit-border); color:#fff;}
+.sev.p2{background:var(--warn-border); color:#1a1200;}
+.sev.p3{background:var(--info-border); color:#fff;}
+.sev.p4{background:var(--cat-flow); color:#fff;}
+.stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0;}
+@media (max-width:820px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
+.stat{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow);}
+.stat .s-num{font-family:"Manrope",sans-serif; font-weight:800; font-size:26px; line-height:1.1;}
+.stat .s-lbl{font-size:12px; color:var(--ink-soft); margin-top:3px;}
+.path{font-family:"IBM Plex Mono",monospace; font-size:11.3px; color:var(--ink-soft); background:var(--surface-2); border:1px solid var(--border-soft); border-radius:5px; padding:1px 6px; white-space:nowrap;}
+.gap-have{color:var(--good-ink); font-weight:700;}
+.gap-miss{color:var(--crit-ink); font-weight:700;}
+.gap-part{color:var(--warn-ink); font-weight:700;}
+@media print{ .cookbook{break-inside:avoid;} .cookbook .cb-body{display:block !important;} .btn{display:none;} }
+
+/* ===== Report template layout ===== */
+.toolbar{position:sticky; top:0; z-index:40; background:#2a2a2c; color:#cfcfd1; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; padding:10px 22px; font-size:12.5px;}
+.toolbar b{color:#fff;}
+.toolbar .btn{background:#3a3a3c; color:#fff; border-color:#4a4a4c;}
+.toolbar .btn:hover{background:#4a4a4c;}
+.toolbar .sp{flex:1;}
+.doc{max-width:980px; margin:26px auto 60px; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:36px 44px 40px;}
+@media (max-width:760px){ .doc{padding:22px 16px; margin:12px 8px 40px;} }
+.doc-head{display:flex; gap:18px; align-items:flex-start; border-bottom:3px solid var(--accent); padding-bottom:16px; margin-bottom:18px;}
+.doc-logo{width:54px; height:54px; border-radius:12px; background:linear-gradient(145deg,#6f6f71,#3a3a3c); color:#fff; font-weight:800; font-family:"Manrope",sans-serif; display:flex; align-items:center; justify-content:center; font-size:13px; flex:0 0 auto;}
+.doc-kicker{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); font-weight:700;}
+.doc-title{font-family:"Manrope","Loma","Noto Sans Thai",sans-serif; font-size:26px; font-weight:800; margin:2px 0 2px;}
+.doc-sub{color:var(--ink-soft); font-size:14px;}
+.doc-no{margin-left:auto; text-align:right; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); white-space:nowrap;}
+.meta-grid{display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:0 0 20px;}
+@media (max-width:760px){ .meta-grid{grid-template-columns:repeat(2,1fr);} }
+.meta-grid > div{padding:9px 12px; border-right:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft); font-size:13px; min-width:0;}
+.meta-grid .mk{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); font-weight:700; margin-bottom:2px;}
+h2.rs{font-family:"Manrope","Loma","Noto Sans Thai",sans-serif; font-size:17px; font-weight:800; margin:28px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center;}
+h2.rs .n{display:inline-flex; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; align-items:center; justify-content:center; font-size:12.5px; flex:0 0 auto;}
+h3.rs3{font-size:14px; font-weight:700; margin:16px 0 6px;}
+.ed{outline:none; border-bottom:1px dashed transparent; color:var(--info-ink); border-radius:3px; min-width:30px; display:inline-block;}
+.editing .ed{border-bottom-color:var(--info-border); background:var(--info-bg);}
+.ed:focus{background:var(--info-bg); box-shadow:0 0 0 2px var(--info-border);}
+.ed.block{display:block; min-height:1.6em; padding:2px 4px;}
+.st{display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none; font-size:11px; font-weight:800; padding:2px 9px; border-radius:100px; border:1px solid var(--border); white-space:nowrap; background:var(--surface-2); color:var(--ink-soft);}
+.st::before{content:"—";}
+.st[data-v="G"]{background:var(--good-bg); color:var(--good-ink); border-color:var(--good-border);} .st[data-v="G"]::before{content:"● Green";}
+.st[data-v="A"]{background:var(--warn-bg); color:var(--warn-ink); border-color:var(--warn-border);} .st[data-v="A"]::before{content:"▲ Amber";}
+.st[data-v="R"]{background:var(--crit-bg); color:var(--crit-ink); border-color:var(--crit-border);} .st[data-v="R"]::before{content:"■ Red";}
+.st[data-v="N"]::before{content:"– N/A";}
+.st.sm::before{font-size:10.5px;}
+.meter{display:flex; align-items:center; gap:8px; min-width:150px;}
+.meter .track{flex:1; height:8px; border-radius:8px; background:var(--border-soft); overflow:hidden;}
+.meter .fill{height:100%; border-radius:8px 4px 4px 8px; background:var(--good-border);}
+.meter.a .fill{background:var(--warn-border);} .meter.r .fill{background:var(--crit-border);}
+.meter .val{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink); min-width:42px; text-align:right;}
+.add-row{margin:-6px 0 12px;}
+.sign-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px;}
+@media (max-width:760px){ .sign-grid{grid-template-columns:1fr;} }
+.sign{border:1px solid var(--border); border-radius:10px; padding:14px; min-height:120px; display:flex; flex-direction:column;}
+.sign .role{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);}
+.sign .line{margin-top:auto; border-top:1px solid var(--ink-faint); padding-top:6px; font-size:12.5px;}
+.summary-box{border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:10px; padding:14px 16px; background:var(--surface-2); margin:10px 0 16px;}
+.hint{font-size:11.5px; color:var(--ink-faint); font-style:italic; margin:4px 0 10px;}
+.rag-legend{display:flex; gap:10px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-soft); margin:6px 0 12px;}
+@media print{
+  .toolbar, .add-row, .no-print{display:none !important;}
+  .doc{border:none; box-shadow:none; margin:0; padding:0; max-width:100%;}
+  .ed{color:var(--ink) !important; border:none !important; background:none !important;}
+  body{background:#fff !important;}
+  h2.rs{break-after:avoid;} table{break-inside:auto;} tr{break-inside:avoid;}
+}
+
+.checklist li{display:block; padding-left:22px; position:relative;}
+.checklist li::before{position:absolute; left:0; top:0;}
+.card ul.checklist{padding-left:0;}
+</style>
+</head>
+<body>
+<div class="doc" style="max-width:1080px">
+  <div class="doc-head">
+    <div class="doc-logo">OPS</div>
+    <div>
+      <div class="doc-kicker">G-ABLE-TDD · dba-ops plugin</div>
+      <div class="doc-title">คู่มือติดตั้ง Deploy และ Update Plugin</div>
+      <div class="doc-sub">พร้อมข้อควรปฏิบัติก่อนและหลังการ deploy / update ทุกครั้ง</div>
+    </div>
+    <div class="doc-no">v1.1.0<br>05-Oct-2026</div>
+  </div>
+
+  <div class="meta-grid">
+    <div><span class="mk">Plugin</span>dba-ops 1.1.0</div>
+    <div><span class="mk">ใช้กับ</span>Oracle · PostgreSQL · SQL Server · MySQL</div>
+    <div><span class="mk">ผู้อ่าน</span>ผู้ดูแล plugin · DBA ผู้ใช้งาน</div>
+    <div><span class="mk">เอกสารที่เกี่ยวข้อง</span>README.md · CHANGELOG.md · SECURITY_REVIEW</div>
+  </div>
+
+  <h2 class="rs"><span class="n">0</span>ภาพรวม: ใครทำอะไร</h2>
+  <div class="grid cols-3">
+    <div class="card"><div class="cat-strip cat-db"></div><div class="card-head"><h4>ผู้ดูแล plugin (Maintainer)</h4></div><ul><li>แก้ไข / เพิ่มความสามารถ</li><li>ผ่าน release gate แล้วออกเวอร์ชัน</li><li>แจกไฟล์ <code class="snip">.plugin</code> + release notes</li><li>เก็บ <code class="snip">.plugin</code> เวอร์ชันก่อนไว้ rollback</li></ul></div>
+    <div class="card"><div class="cat-strip cat-os"></div><div class="card-head"><h4>DBA ผู้ใช้งาน</h4></div><ul><li>ติดตั้ง / อัปเดต plugin ใน Cowork</li><li>ดูแล workspace ของตัวเอง (config + work)</li><li>ตรวจและอนุมัติรายงานทุกฉบับ</li></ul></div>
+    <div class="card"><div class="cat-strip cat-backup"></div><div class="card-head"><h4>DB server ของลูกค้า</h4></div><ul><li>รัน collector (read-only) ตามเวลา</li><li>ส่งไฟล์ <code class="snip">.dck / .mck</code> มายัง inbox</li><li>อัปเดต collector เมื่อ release มีป้าย <b>COLLECTOR</b></li></ul></div>
+  </div>
+  <div class="diagram-frame">
+    <svg viewBox="0 0 900 200" role="img" aria-label="ส่วนประกอบของ dba-ops plugin">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-faint)"/></marker></defs>
+      <rect class="fd-box fd-db" x="15" y="30" width="200" height="120" rx="10"/>
+      <text class="fd-title" x="115" y="56" text-anchor="middle">Plugin (Cowork)</text>
+      <text class="fd-sub" x="115" y="76" text-anchor="middle">skills 6 ตัว</text>
+      <text class="fd-sub" x="115" y="92" text-anchor="middle">kit (ต้นฉบับ, อ่านอย่างเดียว)</text>
+      <text class="fd-sub" x="115" y="108" text-anchor="middle">Playbook · คู่มือ</text>
+      <text class="fd-sub" x="115" y="124" text-anchor="middle">อัปเดต = ติดตั้ง .plugin ใหม่</text>
+      <rect class="fd-box fd-ma" x="290" y="30" width="300" height="120" rx="10"/>
+      <text class="fd-title" x="440" y="56" text-anchor="middle">Workspace บนเครื่อง DBA (เช่น DBA_Ops)</text>
+      <text class="fd-sub" x="440" y="76" text-anchor="middle">kit/ ← install_kit.py (ถูกแทนที่ตอน update)</text>
+      <text class="fd-sub" x="440" y="92" text-anchor="middle">config/&lt;CODE&gt;.json ← ของผู้ใช้ ไม่ถูกแตะ</text>
+      <text class="fd-sub" x="440" y="108" text-anchor="middle">work/&lt;CODE&gt;/ ← ข้อมูลลูกค้า ไม่ถูกแตะ</text>
+      <text class="fd-sub" x="440" y="124" text-anchor="middle">_kit_previous/ ← สำรองไว้ rollback</text>
+      <rect class="fd-box fd-backup" x="665" y="30" width="220" height="120" rx="10"/>
+      <text class="fd-title" x="775" y="56" text-anchor="middle">DB server ลูกค้า</text>
+      <text class="fd-sub" x="775" y="76" text-anchor="middle">collector + collector.conf</text>
+      <text class="fd-sub" x="775" y="92" text-anchor="middle">cron / Task Scheduler</text>
+      <text class="fd-sub" x="775" y="108" text-anchor="middle">ส่ง .dck/.mck → inbox</text>
+      <text class="fd-sub" x="775" y="124" text-anchor="middle">อัปเดตแยก (ไม่อัตโนมัติ)</text>
+      <line class="fd-edge" x1="215" y1="90" x2="288" y2="90" marker-end="url(#ah)"/>
+      <text class="fd-edge-label" x="252" y="82" text-anchor="middle" style="fill:var(--ink-soft)">install</text>
+      <line class="fd-edge" x1="663" y1="90" x2="592" y2="90" marker-end="url(#ah)"/>
+      <text class="fd-edge-label" x="628" y="82" text-anchor="middle" style="fill:var(--ink-soft)">.dck</text>
+      <path class="fd-edge" d="M 440 150 L 440 180 L 775 180 L 775 152" marker-end="url(#ah)"/>
+      <text class="fd-edge-label" x="610" y="174" text-anchor="middle" style="fill:var(--ink-soft)">collector bundle (DBA นำไปติดตั้ง)</text>
+    </svg>
+  </div>
+
+  <h2 class="rs"><span class="n">1</span>ติดตั้ง plugin (DBA ผู้ใช้งาน · ครั้งแรก)</h2>
+  <ol class="stage-list">
+    <li><div class="st-t">เตรียมเครื่อง</div><div class="st-d">Claude desktop (Cowork) · Python 3.8 ขึ้นไป · <code class="snip">pip install --user openpyxl python-docx</code> · สร้างโฟลเดอร์ workspace เช่น <span class="path">D:\DBA_Ops</span> (ไม่ควรอยู่ในโฟลเดอร์ที่ sync ขึ้น cloud สาธารณะ)</div></li>
+    <li><div class="st-t">ติดตั้งไฟล์ <code class="snip">dba-ops.plugin</code></div><div class="st-d">รับไฟล์จากผู้ดูแล plugin (ช่องทางภายในองค์กรเท่านั้น) → ลากหรือแนบไฟล์ลงในแชทของ Cowork → กดปุ่มติดตั้ง/ยอมรับ plugin บน preview ที่แสดงขึ้นมา ถ้าองค์กรใช้ plugin marketplace ให้ติดตั้งผ่าน marketplace แทน</div></li>
+    <li><div class="st-t">เชื่อมโฟลเดอร์ workspace</div><div class="st-d">ใน Cowork เลือก "Add folder" แล้วเลือกโฟลเดอร์ workspace (หรือโฟลเดอร์แม่)</div></li>
+    <li><div class="st-t">ติดตั้ง kit ลง workspace</div><div class="st-d">พิมพ์ <b>"ติดตั้ง DBA Ops ที่โฟลเดอร์ DBA_Ops"</b> → Claude (skill dba-ops-setup) จะคัดลอก kit ลง <span class="path">DBA_Ops\kit</span> และตรวจว่ามี Python library ครบ</div></li>
+    <li><div class="st-t">เพิ่มลูกค้าและระบบ</div><div class="st-d">พิมพ์ <b>"เพิ่มลูกค้า ABC ชื่อ ABC Co., Ltd."</b> แล้วต่อด้วย <b>"เพิ่มระบบ SALESDB เป็น Oracle RAC 2 node host salesdb01, salesdb02"</b> Claude จะสร้าง <span class="path">config\ABC.json</span> ให้ (สิทธิ์ 600)</div></li>
+    <li><div class="st-t">ตรวจว่าติดตั้งสำเร็จ</div><div class="st-d">พิมพ์ <b>"ทดสอบ DBA Ops ด้วยไฟล์ตัวอย่าง"</b> → ต้องได้ Daily Status Report และ Routine Checklist ตัวอย่าง จากนั้นลบผลทดสอบออก</div></li>
+  </ol>
+
+  <h2 class="rs"><span class="n">2</span>Deploy ไปยังลูกค้า (collector บน DB server)</h2>
+  <ol class="stage-list">
+    <li><div class="st-t">ขออนุมัติ</div><div class="st-d">เปิด Standard Change กับลูกค้า (สคริปต์ read-only + cron) ระบุ host, เวลา, ช่องทางส่งไฟล์ และผู้รับผิดชอบ</div></li>
+    <li><div class="st-t">ให้ Claude เตรียม bundle</div><div class="st-d">พิมพ์ <b>"เตรียม collector ของ SALESDB"</b> → ได้โฟลเดอร์ <span class="path">work\ABC\deploy\SALESDB\</span> พร้อม collector.conf ที่ตั้งค่าแล้ว (ไม่มี password)</div></li>
+    <li><div class="st-t">สร้าง monitor user สิทธิ์ต่ำ</div><div class="st-d">ใช้สคริปต์ <code class="snip">setup_monitor_*.sql</code> ของ engine นั้น (Oracle ใช้ <code class="snip">/ as sysdba</code> ได้ แต่แนะนำ <code class="snip">c##dbaops</code> + wallet สำหรับ DB ที่ OPEN)</div></li>
+    <li><div class="st-t">ติดตั้งและทดสอบบน server</div><div class="st-d"><code class="snip">chmod 700 collector; chmod 600 collector.conf</code> → รัน daily_check ด้วยมือ → <code class="snip">python3 validate_dck.py &lt;file&gt;</code> ต้องได้ OK → ตั้ง cron (daily 08:00, monthly วันที่ 1 08:30) · RAC: FULL 1 node, OS_ONLY node อื่น</div></li>
+    <li><div class="st-t">ตั้งช่องทางส่งไฟล์</div><div class="st-d">PAR ของ OCI แบบ <b>เขียนอย่างเดียว + มีวันหมดอายุ + แยก prefix ต่อระบบ</b> หรือ scp/copy มือ → ไฟล์ต้องมาถึง <span class="path">work\ABC\inbox</span></div></li>
+    <li><div class="st-t">รอบแรก</div><div class="st-d">พิมพ์ <b>"รัน daily ของ ABC"</b> แล้วตรวจว่าไม่มีรายการ "collection error" ที่ยังไม่รู้สาเหตุ</div></li>
+  </ol>
+
+  <h2 class="rs"><span class="n">3</span>ข้อควรปฏิบัติ <u>ก่อน</u> และ <u>หลัง</u> deploy ทุกครั้ง</h2>
+  <div class="grid cols-2">
+    <div class="card"><div class="cat-strip" style="background:var(--warn-border)"></div><div class="card-head"><h4>ก่อน deploy</h4><span class="card-tag" style="background:var(--warn-bg);color:var(--warn-ink)">BEFORE</span></div>
+      <ul class="checklist">
+        <li><b>ได้รับอนุมัติ</b> change จากลูกค้าแล้ว</li>
+        <li><b>ทดสอบบน non-prod</b> ของ engine/version เดียวกันแล้ว (Oracle, SQL Server ต้องทำทุกครั้งจนกว่าจะผ่านการใช้งานจริง)</li>
+        <li><b>ใช้ user สิทธิ์ต่ำ</b> ไม่ใช้ root, ไม่มี password ใน collector.conf หรือสคริปต์</li>
+        <li><b>OUT_DIR เป็นโฟลเดอร์ส่วนตัว</b> (ไม่ใช่ /tmp) และ collector.conf สิทธิ์ 600</li>
+        <li><b>ตรวจ license</b>: Oracle เปิด <code class="snip">USE_DIAG_PACK=Y</code> เฉพาะเมื่อมี Diagnostics Pack</li>
+        <li><b>PAR</b> สร้างใหม่สำหรับลูกค้ารายนี้: write-only, มีวันหมดอายุ, ไม่ใช้ร่วมกับลูกค้าอื่น</li>
+        <li><b>ปรับ threshold</b> ใน config ให้ตรงกับ SLA ในสัญญา</li>
+        <li><b>bundle สะอาด</b>: ไม่มี work/ หรือ config ของลูกค้ารายอื่นปนมา</li>
+      </ul></div>
+    <div class="card"><div class="cat-strip" style="background:var(--good-border)"></div><div class="card-head"><h4>หลัง deploy</h4><span class="card-tag" style="background:var(--good-bg);color:var(--good-ink)">AFTER</span></div>
+      <ul class="checklist">
+        <li><b>ไฟล์แรก</b>ผ่าน <code class="snip">validate_dck.py</code> และถูกประมวลผลโดยไม่มี REJECT</li>
+        <li><b>ทุก host</b> ส่งไฟล์ครบ (รายงานไม่มี "ไม่ได้รับไฟล์จาก …")</li>
+        <li><b>collection error</b> ทุกรายการรู้สาเหตุ (สิทธิ์, feature ที่ไม่ได้ใช้) และบันทึกไว้</li>
+        <li><b>ค่าในรายงานตรงกับของจริง</b>: สุ่มเทียบ 3–5 ค่ากับการ query ด้วยมือ (tablespace, backup, lag)</li>
+        <li><b>บันทึก</b> CR id, collector version, host, วันที่ ลง Change_Log ใน Register</li>
+        <li><b>สิทธิ์ไฟล์</b>บน server: <code class="snip">ls -l</code> collector 700, conf 600, output 750/640</li>
+        <li><b>ติดตาม 7 วันแรก</b> ทุกวัน แล้วค่อยลดเป็นตรวจเฉพาะ Red/Amber</li>
+      </ul></div>
+  </div>
+
+  <h2 class="rs"><span class="n">4</span>Update plugin — ขั้นตอน</h2>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-n">1</div><div class="flow-t">Maintainer แก้</div><div class="flow-sub">บนสำเนา plugin · skill dba-ops-release</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-n">2</div><div class="flow-t">Version + CHANGELOG</div><div class="flow-sub">semver · ป้าย BREAKING / COLLECTOR</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-n">3</div><div class="flow-t">Release gate</div><div class="flow-sub">release_check.py ต้อง RELEASE OK</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-n">4</div><div class="flow-t">แจก .plugin</div><div class="flow-sub">+ release notes · เก็บเวอร์ชันเก่า</div></div>
+  </div>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-n">5</div><div class="flow-t">ผู้ใช้ติดตั้ง .plugin ใหม่</div><div class="flow-sub">วิธีเดียวกับข้อ 1.2 (ทับของเดิม)</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-n">6</div><div class="flow-t">"อัปเดต kit"</div><div class="flow-sub">kit เก่าย้ายไป _kit_previous อัตโนมัติ</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-n">7</div><div class="flow-t">Smoke test</div><div class="flow-sub">validate + daily · เทียบกับเมื่อวาน</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="flow-n">8</div><div class="flow-t">Collector (ถ้ามีป้าย)</div><div class="flow-sub">deploy ใหม่ตามหัวข้อ 2–3</div></div>
+  </div>
+
+  <h3 class="rs3">หลักการเลขเวอร์ชัน (Semantic Versioning)</h3>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>ประเภทการเปลี่ยน</th><th>เลขที่ขยับ</th><th>ตัวอย่าง</th><th>ผลต่อผู้ใช้</th></tr></thead>
+      <tbody>
+        <tr><td><b>BREAKING</b> — format ไฟล์ collector, รูปแบบ config, โครงสร้าง workspace, ลบ check</td><td class="num">MAJOR 2.0.0</td><td>เปลี่ยน contract เป็น v2</td><td>ต้องทำ upgrade steps + deploy collector ใหม่ทุก server</td></tr>
+        <tr><td><b>COLLECTOR</b> หรือเพิ่มความสามารถ — check ใหม่, skill ใหม่, ส่วนใหม่ในรายงาน</td><td class="num">MINOR 1.2.0</td><td>เพิ่ม check Patroni</td><td>update kit; collector ใหม่เฉพาะที่ต้องการ check นั้น</td></tr>
+        <tr><td>แก้ bug, ข้อความ, ค่า default</td><td class="num">PATCH 1.1.1</td><td>แก้ข้อความรายงาน</td><td>update kit อย่างเดียว</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="rs"><span class="n">5</span>ข้อควรปฏิบัติ <u>ก่อน</u> และ <u>หลัง</u> update ทุกครั้ง</h2>
+  <div class="grid cols-2">
+    <div class="card"><div class="cat-strip" style="background:var(--warn-border)"></div><div class="card-head"><h4>ก่อน update — Maintainer</h4><span class="card-tag" style="background:var(--warn-bg);color:var(--warn-ink)">RELEASE</span></div>
+      <ul class="checklist">
+        <li><b>แก้บนสำเนา</b> ไม่แก้ plugin ที่ติดตั้งใช้งานอยู่</li>
+        <li><b>ทำตามกฎความปลอดภัย</b> ของ SECURITY_REVIEW (config parse, ไม่มี secret ใน argv, xlsafe, escape HTML, CSP)</li>
+        <li><b>เวอร์ชันตรงกัน 3 จุด</b>: plugin.json, kit/VERSION, CHANGELOG (+ COLLECTOR_VERSION ถ้าแก้ collector)</li>
+        <li><b>CHANGELOG</b> มีหัวข้อ Added / Changed / Fixed / Security, ป้าย BREAKING / COLLECTOR และ Upgrade steps</li>
+        <li><b>release_check.py</b> ต้องได้ <code class="snip">RELEASE OK 7/7</code></li>
+        <li><b>แก้ collector</b> → ทดสอบกับ non-prod จริงของ engine นั้น แล้ว validate output</li>
+        <li><b>ไม่มีข้อมูลลูกค้า</b>, ชื่อ host, PAR หรือ password ใน samples / templates / docs</li>
+        <li><b>เก็บ .plugin เวอร์ชันก่อน</b>ไว้สำหรับ rollback</li>
+      </ul></div>
+    <div class="card"><div class="cat-strip" style="background:var(--warn-border)"></div><div class="card-head"><h4>ก่อน update — DBA ผู้ใช้</h4><span class="card-tag" style="background:var(--warn-bg);color:var(--warn-ink)">USER</span></div>
+      <ul class="checklist">
+        <li><b>อ่าน release notes</b> ว่ามี BREAKING / COLLECTOR ไหม</li>
+        <li><b>ไม่ update ระหว่างงานสำคัญ</b> (incident เปิดอยู่, ช่วงทำ monthly report)</li>
+        <li><b>ประมวลผล inbox ให้เสร็จ</b>ก่อน (รัน daily รอบล่าสุด)</li>
+        <li><b>สำรอง</b> <span class="path">config\</span> และ <span class="path">work\&lt;CODE&gt;\state\</span> (copy ไปที่อื่น)</li>
+        <li><b>ได้ไฟล์ .plugin จากผู้ดูแลโดยตรง</b> ไม่รับจากแหล่งอื่น</li>
+      </ul></div>
+    <div class="card"><div class="cat-strip" style="background:var(--good-border)"></div><div class="card-head"><h4>หลัง update — DBA ผู้ใช้</h4><span class="card-tag" style="background:var(--good-bg);color:var(--good-ink)">VERIFY</span></div>
+      <ul class="checklist">
+        <li><b>เวอร์ชัน</b> <span class="path">kit\VERSION</span> ตรงกับ plugin และ <span class="path">_kit_previous\</span> มีเวอร์ชันเก่า</li>
+        <li><b>config / work ยังอยู่ครบ</b> และค่าไม่เปลี่ยน</li>
+        <li><b>smoke test</b>: validate ไฟล์ล่าสุด 1 ไฟล์ + รัน daily → สถานะเทียบกับเมื่อวานต้องไม่เปลี่ยนแบบอธิบายไม่ได้</li>
+        <li><b>เปิดรายงาน</b> H01 / X01 ได้ปกติ (Excel ไม่ขึ้น error, HTML แก้ไข/Save/Print ได้)</li>
+        <li><b>มีป้าย COLLECTOR</b> → วางแผน deploy collector ใหม่ทุก server ตามหัวข้อ 2–3 (ใช้ CR)</li>
+        <li><b>scheduled task</b> (ถ้ามี) รันรอบถัดไปสำเร็จ</li>
+      </ul></div>
+    <div class="card"><div class="cat-strip" style="background:var(--good-border)"></div><div class="card-head"><h4>หลัง update — Maintainer</h4><span class="card-tag" style="background:var(--good-bg);color:var(--good-ink)">FOLLOW-UP</span></div>
+      <ul class="checklist">
+        <li><b>ติดตามว่าทุกคนอัปเดตแล้ว</b> (รายชื่อผู้ใช้ + เวอร์ชัน)</li>
+        <li><b>รวบรวมปัญหา</b> 3–5 วันแรก ถ้าร้ายแรงให้สั่ง rollback ทันที</li>
+        <li><b>ติดตามการ deploy collector</b> ของลูกค้าที่ได้รับผลกระทบ</li>
+        <li><b>รัน security_check.py</b> กับ workspace ตัวอย่างก่อนแจกต่อ</li>
+      </ul></div>
+  </div>
+
+  <h2 class="rs"><span class="n">6</span>Rollback</h2>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>ส่วน</th><th>วิธี rollback</th></tr></thead>
+      <tbody>
+        <tr><td><b>kit ใน workspace</b></td><td>พิมพ์ "rollback kit" หรือรัน <code class="snip">python3 DBA_Ops\kit\tools\install_kit.py --workspace DBA_Ops --rollback</code> (นำเวอร์ชันล่าสุดใน _kit_previous กลับมา)</td></tr>
+        <tr><td><b>plugin (skills)</b></td><td>ติดตั้งไฟล์ .plugin เวอร์ชันก่อนหน้าทับ</td></tr>
+        <tr><td><b>collector บน server</b></td><td>คืนโฟลเดอร์ collector เดิมที่สำรองไว้ก่อน deploy · generator อ่านไฟล์ของ collector เวอร์ชันเก่าได้เสมอ (contract เดิม)</td></tr>
+        <tr><td><b>ข้อมูลรายงาน</b></td><td>คืน <span class="path">work\&lt;CODE&gt;\state\</span> จากที่สำรองไว้ แล้วรัน daily/monthly ใหม่</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="rs"><span class="n">7</span>ข้อห้าม</h2>
+  <div class="callout crit">
+    <div class="c-icon">⛔</div>
+    <div class="c-body"><div class="c-text">
+      ห้ามแจก <span class="path">config\</span> / <span class="path">work\</span> ของลูกค้า · ห้ามใส่ password หรือ PAR URL ในไฟล์ที่แจก · ห้ามให้ Claude เชื่อมต่อหรือรัน change กับ DB ลูกค้าโดยตรง · ห้ามส่งรายงานให้ลูกค้าโดยไม่ผ่านการตรวจทานของ DBA · ห้ามแก้ template ต้นฉบับใน kit (ให้คัดลอกออกมาก่อน) · ห้ามรวม <span class="path">Oracle/reference</span> ที่มีชื่อระบบของโปรเจกต์ใน plugin</div></div>
+  </div>
+
+  <h2 class="rs"><span class="n">8</span>ปัญหาที่พบบ่อย</h2>
+  <div class="table-wrap">
+    <table class="data tbl-fixed">
+      <thead><tr><th style="width:34%">อาการ</th><th>วิธีแก้</th></tr></thead>
+      <tbody>
+        <tr><td>Claude ไม่ใช้ขั้นตอนของ plugin</td><td>พิมพ์ชื่องานให้ชัด เช่น "รัน daily ของ ABC" · ตรวจว่า plugin ติดตั้งและเปิดใช้อยู่</td></tr>
+        <tr><td>แจ้งว่า kit เก่ากว่า plugin</td><td>ตอบตกลงให้อัปเดต (หัวข้อ 4 ขั้น 6) หลังทำ checklist ก่อน update</td></tr>
+        <tr><td><code class="snip">ModuleNotFoundError: openpyxl</code></td><td><code class="snip">pip install --user openpyxl python-docx</code></td></tr>
+        <tr><td>REJECT ไฟล์ .dck</td><td>ชื่อ system/host ในไฟล์ไม่ถูกต้อง หรือไฟล์ถูกแก้ระหว่างทาง → ตรวจ collector.conf (SYSTEM ใช้ได้แค่ A-Z a-z 0-9 -) และช่องทางส่งไฟล์</td></tr>
+        <tr><td>"ไม่ได้รับไฟล์จาก host"</td><td>ตรวจ cron, log ของ collector, การ upload (PAR หมดอายุ?)</td></tr>
+        <tr><td>collector หยุดพร้อม "config … writable by group/other"</td><td><code class="snip">chmod 600 collector.conf</code> และให้ owner เป็น user ที่รัน cron</td></tr>
+        <tr><td>Scheduled task เข้าโฟลเดอร์ไม่ได้</td><td>เปิด "Require this computer" ให้ task และให้เครื่องเปิด Claude desktop ไว้</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="doc-footer"><span>dba-ops plugin 1.1.0 · Install, Deploy &amp; Update Guide · G-ABLE-TDD</span><span>ทบทวนเอกสารนี้ทุกครั้งที่ออกเวอร์ชัน MAJOR</span></div>
+</div>
+
+</body>
+</html>
