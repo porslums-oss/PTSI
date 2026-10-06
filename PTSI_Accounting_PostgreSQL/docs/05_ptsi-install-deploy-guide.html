@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>PTSI Accounting — Install &amp; Deploy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  .heat{display:grid; grid-template-columns:90px repeat(3,1fr); gap:6px; margin-top:20px; font-size:12.5px}
+  .heat div{border-radius:8px; padding:10px; min-height:70px}
+  .heat .ax{background:transparent; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; text-align:center; min-height:auto}
+  .heat .lo{background:#E4F4F0} .heat .md{background:#FBF0DD} .heat .hi{background:#FBE9E7}
+  .heat b{display:inline-block; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:1px 7px; margin:2px; font-family:'IBM Plex Mono',monospace; font-size:11.5px}
+  td b.id{font-family:'IBM Plex Mono',monospace}
+
+  .diagram-card svg{max-width:100%; height:auto}
+  .diagram-card.wide{overflow:auto}
+  figure.shot{margin:18px 0 0; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  figure.shot img{display:block; width:100%; height:auto}
+  figure.shot figcaption{padding:9px 14px; font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); background:var(--surface-soft)}
+  details.tbl{margin-top:12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  details.tbl > summary{cursor:pointer; padding:12px 16px; font-weight:600; list-style:none; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  details.tbl > summary::-webkit-details-marker{display:none}
+  details.tbl > summary::before{content:"▸"; color:var(--ink-faint); transition:transform .12s}
+  details.tbl[open] > summary::before{transform:rotate(90deg)}
+  details.tbl > summary code{font-size:13.5px; color:var(--accent-dark)}
+  details.tbl > summary small{color:var(--ink-soft); font-weight:400}
+  details.tbl .table-wrap{margin:0; border:none; border-top:1px solid var(--line); border-radius:0; box-shadow:none}
+  .kbd{font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--surface-soft); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px}
+  .pill.warn{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+  .pill.crit{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .pill.info{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .two{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-top:18px}
+  .toc-mini{columns:2; column-gap:30px; margin:16px 0 0; padding-left:20px; color:var(--ink-soft); font-size:13.5px}
+  p.note{color:var(--ink-soft); font-size:13.5px; margin:12px 0 0}
+  h3.sub{font-size:16px; margin:30px 0 0}
+  h3.sub + .table-wrap, h3.sub + .diagram-card, h3.sub + .card-grid, h3.sub + p{margin-top:12px}
+  ol.steps{margin:14px 0 0; padding-left:22px} ol.steps li{margin:7px 0}
+  td code, p code, li code{font-size:12.5px; background:var(--surface-soft); padding:1px 6px; border-radius:5px}
+  .heat.five{grid-template-columns:90px repeat(3,1fr)}
+  td.mono{font-family:'IBM Plex Mono',monospace; font-size:12.5px}
+  .badge.low{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.mid{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+  .badge.high{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  @media print{ .sidebar{display:none} .app{display:block} main{max-width:none; padding:0} details.tbl{break-inside:avoid} section{break-inside:auto} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">AC</div><div class="brand-text"><b>PTSI Accounting</b><span>คู่มือ Install / Deploy</span></div></div>
+    <div class="nav-section-title">ภาพรวม</div><ul class="nav-list"><li><a class="nav-link" href="#overview"><span class="dot"></span>สรุปภาพรวม</a></li><li><a class="nav-link" href="#arch"><span class="num">1</span>สถาปัตยกรรม/ทางเลือก</a></li><li><a class="nav-link" href="#sw"><span class="num">2</span>ซอฟต์แวร์ที่ต้องใช้</a></li><li><a class="nav-link" href="#db"><span class="num">3</span>ลำดับสคริปต์ฐานข้อมูล</a></li></ul><div class="nav-section-title">ติดตั้ง On-premise</div><ul class="nav-list"><li><a class="nav-link" href="#linux"><span class="num">4</span>Linux</a></li><li><a class="nav-link" href="#windows"><span class="num">5</span>Windows Server</a></li><li><a class="nav-link" href="#mac"><span class="num">6</span>macOS</a></li><li><a class="nav-link" href="#docker"><span class="num">7</span>Docker</a></li></ul><div class="nav-section-title">Cloud</div><ul class="nav-list"><li><a class="nav-link" href="#cloud"><span class="num">8</span>Vercel + Neon</a></li></ul><div class="nav-section-title">ใช้งานจริง</div><ul class="nav-list"><li><a class="nav-link" href="#verify"><span class="num">9</span>ตรวจสอบหลังติดตั้ง</a></li><li><a class="nav-link" href="#ops"><span class="num">10</span>อัปเกรด/สำรอง/กู้คืน</a></li><li><a class="nav-link" href="#trouble"><span class="num">11</span>แก้ปัญหา</a></li></ul>
+    <div class="sidebar-footer"><b>จัดทำโดย</b>PTS Innovations Co., Ltd.<br>PTSI Accounting — คู่มือ Install / Deploy<br>อัปเดต 2026-10-06</div>
+  </aside>
+  <main>
+<section id="overview"><h1 style="font-size:26px; margin:0 0 4px">PTSI Accounting — คู่มือ Install · Setup · Deploy</h1><p style="color:var(--ink-soft); margin:0">ซอฟต์แวร์ที่ต้องใช้ทั้งหมด และขั้นตอนติดตั้งบนเครื่อง server ของแต่ละระบบปฏิบัติการ (Linux, Windows, macOS) รวมถึงการ deploy บน Vercel + Neon ที่ใช้งานอยู่ปัจจุบัน</p><div class="meta-row"><span class="chip">Runtime: <b>Node.js ≥ 20</b></span><span class="chip">ฐานข้อมูล: <b>PostgreSQL 16+ (schema acct)</b></span><span class="chip">Dependencies: <b>express · pg</b></span><span class="chip">ทางเลือก: <b>Cloud / On-premise</b></span><span class="chip">อัปเดต: <b>2026-10-06</b></span></div><div class="callout" style="border-left-color:#8A5A16"><div class="ic" style="background:var(--badge-ongoing-bg);color:var(--badge-ongoing-fg)">!</div><div class="body"><div class="head"><strong>สถานะการทดสอบ</strong><span class="pill warn">โปรดอ่าน</span></div>ส่วนฐานข้อมูล (ลำดับสคริปต์ neon_1…21 + data_migration) <b>ทดสอบแล้ว</b>บน PostgreSQL 16 (Ubuntu) โดยสร้างฐานข้อมูลเปล่าแล้วเทียบจำนวนอ็อบเจกต์ (55 ตาราง / 9 view / 87 ฟังก์ชัน / 28 trigger) · การติดตั้งบน Vercel + Neon ใช้งานจริงอยู่ · ขั้นตอนบน Windows Server, macOS, Oracle Linux/RHEL และ Docker เขียนจากโครงสร้างแอปที่เป็น Node.js + PostgreSQL มาตรฐาน แต่ <b>ยังไม่ได้ทดสอบบนเครื่องจริง</b> — ให้ทดลองบนเครื่องทดสอบก่อนใช้งานจริง</div></div></section><section id="arch"><div class="sec-head"><div class="sec-num">1</div><h2>ภาพรวมและทางเลือกการติดตั้ง<small>Architecture</small></h2></div><p class="sec-lede">ระบบมี 3 ส่วน: เว็บ (ไฟล์เดียว <code>public/index.html</code>) · API (Express <code>server.js</code>) · ฐานข้อมูล PostgreSQL ที่เก็บตรรกะบัญชีไว้ในฟังก์ชัน</p><div class="diagram-card"><svg id="g_arch" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1337.640625px;" viewBox="0 0 1337.640625 277.57427978515625" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#g_arch{font-family:Sarabun,Segoe UI,sans-serif;font-size:16px;fill:#1B2028;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#g_arch .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#g_arch .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#g_arch .error-icon{fill:#FFFFFF;}#g_arch .error-text{fill:#000000;stroke:#000000;}#g_arch .edge-thickness-normal{stroke-width:1px;}#g_arch .edge-thickness-thick{stroke-width:3.5px;}#g_arch .edge-pattern-solid{stroke-dasharray:0;}#g_arch .edge-thickness-invisible{stroke-width:0;fill:none;}#g_arch .edge-pattern-dashed{stroke-dasharray:3;}#g_arch .edge-pattern-dotted{stroke-dasharray:2;}#g_arch .marker{fill:#565D68;stroke:#565D68;}#g_arch .marker.cross{stroke:#565D68;}#g_arch svg{font-family:Sarabun,Segoe UI,sans-serif;font-size:16px;}#g_arch p{margin:0;}#g_arch .label{font-family:Sarabun,Segoe UI,sans-serif;color:#1B2028;}#g_arch .cluster-label text{fill:#000000;}#g_arch .cluster-label span{color:#000000;}#g_arch .cluster-label span p{background-color:transparent;}#g_arch .label text,#g_arch span{fill:#1B2028;color:#1B2028;}#g_arch .node rect,#g_arch .node circle,#g_arch .node ellipse,#g_arch .node polygon,#g_arch .node path{fill:#E4F4F0;stroke:#177A67;stroke-width:1px;}#g_arch .rough-node .label text,#g_arch .node .label text,#g_arch .image-shape .label,#g_arch .icon-shape .label{text-anchor:middle;}#g_arch .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#g_arch .rough-node .label,#g_arch .node .label,#g_arch .image-shape .label,#g_arch .icon-shape .label{text-align:center;}#g_arch .node.clickable{cursor:pointer;}#g_arch .root .anchor path{fill:#565D68!important;stroke-width:0;stroke:#565D68;}#g_arch .arrowheadPath{fill:#0b0b0b;}#g_arch .edgePaths .path{stroke:#565D68;stroke-width:1px;}#g_arch .flowchart-link{stroke:#565D68;fill:none;}#g_arch .edgeLabel{background-color:#EEF1F6;text-align:center;}#g_arch .edgeLabel p{background-color:#EEF1F6;}#g_arch .edgeLabel rect{opacity:0.5;background-color:#EEF1F6;fill:#EEF1F6;}#g_arch .labelBkg{background-color:rgba(238, 241, 246, 0.5);}#g_arch .cluster rect{fill:#FFFFFF;stroke:hsl(0, 0%, 90%);stroke-width:1px;}#g_arch .cluster text{fill:#000000;}#g_arch .cluster span{color:#000000;}#g_arch .node .collapsed-indicator{fill:hsl(0, 0%, 90%);stroke:none;opacity:0.6;}#g_arch .node .collapsed-separator{stroke:hsl(0, 0%, 90%);stroke-width:0.75px;}#g_arch div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:Sarabun,Segoe UI,sans-serif;font-size:12px;background:#FFFFFF;border:1px solid hsl(0, 0%, 90%);border-radius:2px;pointer-events:none;z-index:100;}#g_arch .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#1B2028;}#g_arch rect.text{fill:none;stroke-width:0;}#g_arch .icon-shape,#g_arch .image-shape{background-color:#EEF1F6;text-align:center;}#g_arch .icon-shape p,#g_arch .image-shape p{background-color:#EEF1F6;padding:2px;}#g_arch .icon-shape .label rect,#g_arch .image-shape .label rect{opacity:0.5;background-color:#EEF1F6;fill:#EEF1F6;}#g_arch .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#g_arch .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#g_arch .node .neo-node{stroke:#177A67;}#g_arch [data-look="neo"].node rect,#g_arch [data-look="neo"].cluster rect,#g_arch [data-look="neo"].node polygon{stroke:url(#g_arch-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#g_arch [data-look="neo"].swimlane.cluster rect{filter:none;}#g_arch [data-look="neo"].node path{stroke:url(#g_arch-gradient);stroke-width:1px;}#g_arch [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#g_arch [data-look="neo"].node .neo-line path{stroke:#177A67;filter:none;}#g_arch [data-look="neo"].node circle{stroke:url(#g_arch-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#g_arch [data-look="neo"].node circle .state-start{fill:#000000;}#g_arch [data-look="neo"].icon-shape .icon{fill:url(#g_arch-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#g_arch [data-look="neo"].icon-shape .icon-neo path{stroke:url(#g_arch-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#g_arch :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="g_arch_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="g_arch_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="g_arch_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="g_arch_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="g_arch_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="g_arch_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="g_arch_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="g_arch_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="g_arch_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="g_arch_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="g_arch_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="g_arch_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M152.766,137.115L160.185,137.115C167.604,137.115,182.443,137.115,196.615,137.115C210.786,137.115,224.292,137.115,231.044,137.115L237.797,137.115" id="g_arch-L_B_P_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_P_0" data-points="W3sieCI6MTUyLjc2NTYyNSwieSI6MTM3LjExNDc0MjI3OTA1MjczfSx7IngiOjE5Ny4yODEyNSwieSI6MTM3LjExNDc0MjI3OTA1MjczfSx7IngiOjI0MS43OTY4NzUsInkiOjEzNy4xMTQ3NDIyNzkwNTI3M31d" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M332.874,122.27L347.061,116.744C361.249,111.218,389.625,100.166,427.492,94.641C465.359,89.115,512.719,89.115,551.365,89.115C590.01,89.115,619.943,89.115,639.191,89.115C658.44,89.115,667.005,89.115,671.288,89.115L675.57,89.115" id="g_arch-L_P_V_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P_V_0" data-points="W3sieCI6MzMyLjg3MzU0NzIwNzkwMTgsInkiOjEyMi4yNjk1Mzk0ODY5NTQ1Nn0seyJ4Ijo0MTgsInkiOjg5LjExNDc0MjI3OTA1MjczfSx7IngiOjU2MC4wNzgxMjUsInkiOjg5LjExNDc0MjI3OTA1MjczfSx7IngiOjY0OS44NzUsInkiOjg5LjExNDc0MjI3OTA1MjczfSx7IngiOjY3OS41NzAzMTI1LCJ5Ijo4OS4xMTQ3NDIyNzkwNTI3M31d" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M332.874,151.96L347.061,157.486C361.249,163.012,389.625,174.063,414.859,179.589C440.094,185.115,462.188,185.115,473.234,185.115L484.281,185.115" id="g_arch-L_P_N_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P_N_0" data-points="W3sieCI6MzMyLjg3MzU0NzIwNzkwMTgsInkiOjE1MS45NTk5NDUwNzExNTA5fSx7IngiOjQxOCwieSI6MTg1LjExNDc0MjI3OTA1MjczfSx7IngiOjQ4OC4yODEyNSwieSI6MTg1LjExNDc0MjI3OTA1MjczfV0=" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M631.875,185.115L634.875,185.115C637.875,185.115,643.875,185.115,649.208,185.115C654.542,185.115,659.208,185.115,661.542,185.115L663.875,185.115" id="g_arch-L_N_E_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_N_E_0" data-points="W3sieCI6NjMxLjg3NSwieSI6MTg1LjExNDc0MjI3OTA1MjczfSx7IngiOjY0OS44NzUsInkiOjE4NS4xMTQ3NDIyNzkwNTI3M30seyJ4Ijo2NjcuODc1LCJ5IjoxODUuMTE0NzQyMjc5MDUyNzN9XQ==" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M871.289,70.415L892.905,66.198C914.521,61.982,957.753,53.548,1003.871,49.331C1049.99,45.115,1098.995,45.115,1123.497,45.115L1148,45.115" id="g_arch-L_V_NE_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_V_NE_0" data-points="W3sieCI6ODcxLjI4OTA2MjUsInkiOjcwLjQxNTAwODk4MjY2NTM2fSx7IngiOjEwMDAuOTg0Mzc1LCJ5Ijo0NS4xMTQ3NDIyNzkwNTI3MzR9LHsieCI6MTE1MiwieSI6NDUuMTE0NzQyMjc5MDUyNzM0fV0=" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M882.984,206.487L902.651,210.395C922.318,214.303,961.651,222.119,1002.003,226.027C1042.354,229.935,1083.724,229.935,1104.409,229.935L1125.094,229.935" id="g_arch-L_E_PG_0" class=" edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_PG_0" data-points="W3sieCI6ODgyLjk4NDM3NSwieSI6MjA2LjQ4Njg3Mjg4MDg0MDZ9LHsieCI6MTAwMC45ODQzNzUsInkiOjIyOS45MzQ1ODU1NzEyODkwNn0seyJ4IjoxMTI5LjA5Mzc1LCJ5IjoyMjkuOTM0NTg1NTcxMjg5MDZ9XQ==" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M882.984,154.597L902.651,149.016C922.318,143.436,961.651,132.275,1000.319,128.056C1038.988,123.837,1076.991,126.56,1095.993,127.921L1114.995,129.283" id="g_arch-L_E_AI_0" class=" edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_AI_0" data-points="W3sieCI6ODgyLjk4NDM3NSwieSI6MTU0LjU5NjY0NDUzMzkxMDUzfSx7IngiOjEwMDAuOTg0Mzc1LCJ5IjoxMjEuMTE0NzQyMjc5MDUyNzN9LHsieCI6MTExOC45ODQzNzUsInkiOjEyOS41Njg2NzA3NzU1MTk1NH1d" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path><path d="M871.289,121.763L892.905,129.125C914.521,136.487,957.753,151.211,998.374,156.12C1038.995,161.029,1077.006,156.124,1096.012,153.672L1115.017,151.219" id="g_arch-L_V_AI_0" class=" edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_V_AI_0" data-points="W3sieCI6ODcxLjI4OTA2MjUsInkiOjEyMS43NjI3MTAwMzg5NDEyfSx7IngiOjEwMDAuOTg0Mzc1LCJ5IjoxNjUuOTM0NTg1NTcxMjg5MDZ9LHsieCI6MTExOC45ODQzNzUsInkiOjE1MC43MDcwMjk2NjY3OTI1NX1d" data-look="classic" marker-end="url(#g_arch_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(197.28125, 137.11474227905273)"><g class="label" data-id="L_B_P_0" transform="translate(-26.515625, -12)"><foreignObject width="53.03125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "><p>HTTPS</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(560.078125, 89.11474227905273)"><g class="label" data-id="L_P_V_0" transform="translate(-29.9765625, -12)"><foreignObject width="59.953125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "><p>A Cloud</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(418, 185.11474227905273)"><g class="label" data-id="L_P_N_0" transform="translate(-52.28125, -12)"><foreignObject width="104.5625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "><p>B On-premise</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_N_E_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1000.984375, 45.114742279052734)"><g class="label" data-id="L_V_NE_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel "><p>DATABASE_URL pooled TLS</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1000.984375, 229.93458557128906)"><g class="label" data-id="L_E_PG_0" transform="translate(-42.6015625, -12)"><foreignObject width="85.203125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "><p>PGHOST ...</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(998.8892, 121.70924)"><g class="label" data-id="L_E_AI_0" transform="translate(-65.2734375, -12)"><foreignObject width="130.546875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "><p>AI import ไม่บังคับ</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_V_AI_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel "></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default  " id="g_arch-flowchart-B-0" data-look="classic" transform="translate(80.3828125, 137.11474227905273)"><rect class="basic label-container" style="" x="-72.3828125" y="-22" width="144.765625" height="44"></rect><g class="label" style="" transform="translate(-52.3828125, -12)"><rect></rect><foreignObject width="104.765625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>เบราว์เซอร์ผู้ใช้</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-P-1" data-look="classic" transform="translate(294.7578125, 137.11474227905273)"><polygon points="52.9609375,0 105.921875,-52.9609375 52.9609375,-105.921875 0,-52.9609375" class="label-container" transform="translate(-52.4609375, 52.9609375)"></polygon><g class="label" style="" transform="translate(-30.9609375, -12)"><rect></rect><foreignObject width="61.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>ทางเลือก</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-V-3" data-look="classic" transform="translate(775.4296875, 89.11474227905273)"><rect class="basic label-container" style="" x="-95.859375" y="-34" width="191.71875" height="68"></rect><g class="label" style="" transform="translate(-75.859375, -24)"><rect></rect><foreignObject width="151.71875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>Vercel Serverless<br/>api/index.js + public</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-N-5" data-look="classic" transform="translate(560.078125, 185.11474227905273)"><rect class="basic label-container" style="" x="-71.796875" y="-34" width="143.59375" height="68"></rect><g class="label" style="" transform="translate(-51.796875, -24)"><rect></rect><foreignObject width="103.59375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>nginx 443<br/>reverse proxy</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-E-7" data-look="classic" transform="translate(775.4296875, 185.11474227905273)"><rect class="basic label-container" style="" x="-107.5546875" y="-34" width="215.109375" height="68"></rect><g class="label" style="" transform="translate(-87.5546875, -24)"><rect></rect><foreignObject width="175.109375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>Node.js server.js :3001<br/>systemd / NSSM / PM2</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-NE-9" data-look="classic" transform="translate(1224.3125, 45.114742279052734)"><path d="M0,13.409828465461288 a72.3125,13.409828465461288 0,0,0 144.625,0 a72.3125,13.409828465461288 0,0,0 -144.625,0 l0,47.40982846546129 a72.3125,13.409828465461288 0,0,0 144.625,0 l0,-47.40982846546129" class="basic label-container outer-path" style="" label-offset-y="13.409828465461288" transform="translate(-72.3125, -37.11474269819193)"></path><g class="label" style="" transform="translate(-67.3125, -5.333333333333333)"><rect></rect><foreignObject width="134.625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>Neon PostgreSQL</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-PG-11" data-look="classic" transform="translate(1224.3125, 229.93458557128906)"><path d="M0,15.093124628492173 a95.21875,15.093124628492173 0,0,0 190.4375,0 a95.21875,15.093124628492173 0,0,0 -190.4375,0 l0,49.09312462849218 a95.21875,15.093124628492173 0,0,0 190.4375,0 l0,-49.09312462849218" class="basic label-container outer-path" style="" label-offset-y="15.093124628492173" transform="translate(-95.21875, -39.639686942738265)"></path><g class="label" style="" transform="translate(-90.21875, -5.333333333333333)"><rect></rect><foreignObject width="180.4375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>PostgreSQL 16 on-prem</p></span></div></foreignObject></g></g><g class="node default  " id="g_arch-flowchart-AI-13" data-look="classic" transform="translate(1224.3125, 137.11474227905273)"><rect class="basic label-container" style="" x="-105.328125" y="-22" width="210.65625" height="44"></rect><g class="label" style="" transform="translate(-85.328125, -12)"><rect></rect><foreignObject width="170.65625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel "><p>Gemini / Anthropic API</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="g_arch-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="g_arch-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="g_arch-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#177A67" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(217.5, 0%, 84.9019607843%)" stop-opacity="1"></stop></linearGradient></svg></div><div class="table-wrap"><table class=""><thead><tr><th></th><th>A: Vercel + Neon (ปัจจุบัน)</th><th>B: On-premise</th></tr></thead><tbody><tr><td>เหมาะกับ</td><td>ใช้งานเร็ว ไม่ต้องดูแลเครื่อง ผู้ใช้เข้าผ่านอินเทอร์เน็ต</td><td>ข้อมูลต้องอยู่ในองค์กร / ไม่ต้องการพึ่ง cloud</td></tr><tr><td>ข้อจำกัด</td><td>แพ็กเกจฟรีมีโควตา, cold start, ข้อกำหนดการใช้เชิงพาณิชย์ (ดูเอกสาร 07)</td><td>ต้องดูแล OS, patch, สำรองข้อมูล, TLS เอง</td></tr><tr><td>การเชื่อมต่อ DB</td><td><code>DATABASE_URL</code> (Neon pooled)</td><td><code>PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD</code></td></tr><tr><td>เวลาติดตั้ง (ประมาณ)</td><td>1–2 ชั่วโมง</td><td>ครึ่งวัน</td></tr></tbody></table></div></section><section id="sw"><div class="sec-head"><div class="sec-num">2</div><h2>ซอฟต์แวร์ที่ต้องใช้<small>Software</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>ซอฟต์แวร์</th><th>เวอร์ชัน</th><th>ใช้ทำอะไร</th><th>จำเป็นใน</th></tr></thead><tbody><tr><td>Node.js</td><td>20 LTS ขึ้นไป (<code>engines &gt;=20</code>)</td><td>รันเซิร์ฟเวอร์ API + เว็บ</td><td>B (A: Vercel จัดให้)</td></tr><tr><td>npm</td><td>มากับ Node.js</td><td>ติดตั้ง express, pg</td><td>B</td></tr><tr><td>PostgreSQL</td><td>16+ พร้อม contrib (<code>pgcrypto</code>, <code>pg_trgm</code>)</td><td>ฐานข้อมูลหลัก</td><td>B (A: Neon)</td></tr><tr><td>psql / pgAdmin / Neon SQL Editor</td><td>ตามเวอร์ชัน PostgreSQL</td><td>รันสคริปต์สร้างฐานข้อมูล</td><td>A · B</td></tr><tr><td>nginx (หรือ IIS/Caddy)</td><td>1.24+</td><td>reverse proxy + HTTPS หน้า Node.js</td><td>B (แนะนำ)</td></tr><tr><td>systemd / NSSM หรือ PM2 / launchd</td><td>—</td><td>ให้ Node.js รันตลอดและเริ่มเองเมื่อเปิดเครื่อง</td><td>B</td></tr><tr><td>pg_dump / pg_restore</td><td>มากับ PostgreSQL</td><td>สำรอง/กู้ข้อมูล</td><td>B</td></tr><tr><td>Git (ไม่บังคับ)</td><td>2.x</td><td>เก็บซอร์สและอัปโหลด GitHub</td><td>A</td></tr><tr><td>บัญชี GitHub · Vercel · Neon</td><td>—</td><td>ซอร์ส / โฮสต์ / ฐานข้อมูล</td><td>A</td></tr><tr><td>Gemini API key หรือ Anthropic API key</td><td>—</td><td>นำเข้าข้อมูลจากไฟล์ด้วย AI (ไม่บังคับ — ไม่มีคีย์ระบบอื่นยังทำงานปกติ)</td><td>ไม่บังคับ</td></tr><tr><td>เบราว์เซอร์ผู้ใช้</td><td>Chrome / Edge / Firefox / Safari ปัจจุบัน</td><td>ใช้งานระบบ</td><td>ทุกกรณี</td></tr></tbody></table></div><h3 class="sub">ขนาดเครื่องแนะนำ (On-premise)</h3><div class="table-wrap"><table class=""><thead><tr><th>ขนาดผู้ใช้</th><th>CPU / RAM</th><th>ดิสก์</th></tr></thead><tbody><tr><td>ถึง 10 ผู้ใช้พร้อมกัน</td><td>2 vCPU / 4 GB</td><td>40 GB SSD (ข้อมูลบัญชีโตช้า — เผื่อ backup แยกดิสก์)</td></tr><tr><td>10–50 ผู้ใช้</td><td>4 vCPU / 8 GB</td><td>100 GB SSD</td></tr></tbody></table></div></section><section id="db"><div class="sec-head"><div class="sec-num">3</div><h2>ฐานข้อมูล: ลำดับสคริปต์ที่ถูกต้อง<small>Database scripts</small></h2></div><p class="sec-lede">ใช้ชุดสคริปต์ใน <code>db/neon_editor/</code> เป็นชุดหลัก (ทั้งบน Neon และ on-premise) — ชุดเดิม <code>db/install_db.sh</code> ล้าสมัย (รันเพียง 01,02,03,04,07) จึง<b>ไม่ควรใช้</b></p><div class="table-wrap"><table class=""><thead><tr><th>ลำดับ</th><th>ไฟล์</th><th>หน้าที่</th><th>หมายเหตุ</th></tr></thead><tbody><tr><td>1</td><td><code>neon_1_roles_schema.sql</code></td><td>สร้าง role (acct_owner/acct_app/acct_report), extension, schema, ตาราง</td><td><b>แก้รหัสผ่าน 3 ตัวในไฟล์ก่อนรัน</b> (อย่างน้อย 12 ตัว, อังกฤษ+ตัวเลข)</td></tr><tr><td>2</td><td><code>neon_2_functions.sql</code></td><td>ฟังก์ชันตรรกะธุรกิจ</td><td></td></tr><tr><td>3</td><td><code>neon_3_views_seed.sql</code></td><td>view, ข้อมูลตั้งต้น (บทบาท ผังบัญชี การแมป GL ผู้ใช้ admin)</td><td>สร้างผู้ใช้ <code>admin</code> รหัสเริ่มต้น — <b>ต้องเปลี่ยนทันที</b></td></tr><tr><td>4</td><td><code>data_migration/01 … 07</code></td><td>จังหวัด/อำเภอ/ตำบล, ข้อมูลหลักที่ย้ายจาก APEX ฯลฯ</td><td>รันเรียง 01→07 (05 อ้างอิง FK ของ 02/03)</td></tr><tr><td>5</td><td><code>neon_5 … neon_21</code></td><td>แพตช์/ฟีเจอร์ตามลำดับเลข (5,6,7,…,21)</td><td>รันเรียงตามเลข ไม่ข้าม</td></tr><tr><td>—</td><td><code>neon_4_healthcheck.sql</code></td><td>ตรวจสุขภาพ (อ่านอย่างเดียว)</td><td>รันเมื่อไรก็ได้ ใช้ยืนยันหลังติดตั้ง</td></tr></tbody></table></div><div class="callout"><div class="ic">i</div><div class="body"><div class="head"><strong>ลำดับย่อ</strong><span class="pill info">ยืนยันแล้ว</span></div>neon_1 → neon_2 → neon_3 → data_migration 01–07 → neon_5 … neon_21 (neon_4 = healthcheck)</div></div><h3 class="sub">ผลลัพธ์ที่ถูกต้อง (ตรวจด้วย neon_4)</h3><div class="table-wrap"><table class=""><thead><tr><th>อ็อบเจกต์</th><th>จำนวน</th></tr></thead><tbody><tr><td>ตาราง (schema acct)</td><td>55</td></tr><tr><td>View</td><td>9</td></tr><tr><td>ฟังก์ชัน</td><td>87</td></tr><tr><td>Trigger</td><td>28</td></tr><tr><td>Role</td><td>acct_owner · acct_app · acct_report</td></tr><tr><td>Extension</td><td>pgcrypto · pg_trgm · plpgsql</td></tr></tbody></table></div></section><section id="linux"><div class="sec-head"><div class="sec-num">4</div><h2>ติดตั้งบน Linux (Oracle Linux / RHEL / Ubuntu)<small>Linux</small></h2></div><p class="sec-lede">ตัวอย่างทำบนบัญชี root/sudo — ชื่อแพ็กเกจต่างกันตามดิสโทร</p><h3 class="sub">4.1 ติดตั้ง PostgreSQL + Node.js</h3><div class="code-block"><div class="code-label">Ubuntu 22.04/24.04</div><pre>sudo apt update
+sudo apt install -y postgresql postgresql-contrib nginx curl
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v   # ต้อง &gt;= v20
+psql --version</pre></div><div class="code-block"><div class="code-label">Oracle Linux 8/9 / RHEL 8/9</div><pre>sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo dnf -qy module disable postgresql
+sudo dnf install -y postgresql16-server postgresql16-contrib nginx
+sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
+sudo systemctl enable --now postgresql-16
+sudo dnf module enable -y nodejs:20 &amp;&amp; sudo dnf install -y nodejs
+# ถ้าใช้ EL-8 ให้เปลี่ยน EL-9 → EL-8 ในลิงก์ repo</pre></div><p class="note">ปรับ <code>pg_hba.conf</code> ให้ผู้ใช้แอปเชื่อมต่อด้วยรหัสผ่านจาก localhost (<code>host ptsi_accounting acct_app 127.0.0.1/32 scram-sha-256</code>) และอย่าเปิด <code>listen_addresses</code> ออกภายนอกถ้าไม่จำเป็น แล้ว <code>systemctl reload postgresql</code></p><h3 class="sub">4.2 สร้างฐานข้อมูลและรันสคริปต์</h3><div class="code-block"><div class="code-label">bash</div><pre>sudo -u postgres createdb -E UTF8 ptsi_accounting
+cd /opt/ptsi-accounting/db/neon_editor     # หลังแตกซอร์สไว้ที่ /opt/ptsi-accounting
+# 1) แก้รหัสผ่าน 3 ตัวใน neon_1_roles_schema.sql ก่อน
+run() { sudo -u postgres psql -d ptsi_accounting -v ON_ERROR_STOP=1 -q -f &quot;$1&quot;; }
+run neon_1_roles_schema.sql
+run neon_2_functions.sql
+run neon_3_views_seed.sql
+for f in data_migration/0[1-7]_*.sql; do run &quot;$f&quot;; done
+for n in $(seq 5 21); do run neon_${n}_*.sql; done
+run neon_4_healthcheck.sql</pre></div><p class="note">สคริปต์ใช้ <code>SET ROLE acct_owner</code> ภายในไฟล์ จึงต้องรันด้วยผู้ใช้ที่เป็น superuser (เช่น postgres) หรือเจ้าของฐานข้อมูลที่สร้าง role ได้ — ถ้าไฟล์ใดล้มเหลว (<code>ON_ERROR_STOP</code>) ให้แก้แล้วรันไฟล์นั้นซ้ำ: ไฟล์ส่วนใหญ่เขียนแบบรันซ้ำได้ (<code>CREATE OR REPLACE</code>/<code>IF NOT EXISTS</code>) แต่ให้ตรวจกับ neon_4 ทุกครั้ง</p><h3 class="sub">4.3 ติดตั้งแอปและตั้งค่า</h3><div class="code-block"><div class="code-label">bash</div><pre>sudo useradd -r -m -s /usr/sbin/nologin ptsiacct
+sudo mkdir -p /opt/ptsi-accounting &amp;&amp; sudo cp -r app deploy db /opt/ptsi-accounting/
+cd /opt/ptsi-accounting/app
+sudo npm install --omit=dev          # หรือ npm ci ถ้ามี package-lock.json
+sudo nano .env &amp;&amp; sudo chmod 600 .env
+sudo chown -R ptsiacct:ptsiacct /opt/ptsi-accounting
+node server.js        # ทดสอบ: ต้องขึ้น [API] PTSI-Accounting listening ... (Ctrl+C ออก)</pre></div><div class="code-block"><div class="code-label">.env ตัวอย่าง</div><pre># /opt/ptsi-accounting/app/.env   (chmod 600)
+HTTP_HOST=127.0.0.1
+HTTP_PORT=3001
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=ptsi_accounting
+PGUSER=acct_app
+PGPASSWORD=&lt;รหัสผ่าน acct_app ที่ตั้งใน neon_1&gt;
+PG_POOL_MAX=20
+PGSSL=false
+# --- ไม่บังคับ: AI import ---
+# AI_PROVIDER=gemini
+# GEMINI_API_KEY=...
+# GEMINI_MODEL=gemini-3.8-flash
+# ANTHROPIC_API_KEY=...</pre></div><h3 class="sub">4.4 ให้รันเป็นบริการ (systemd)</h3><div class="code-block"><div class="code-label">bash</div><pre>sudo cp /opt/ptsi-accounting/deploy/ptsi-accounting.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now ptsi-accounting
+sudo systemctl status ptsi-accounting
+journalctl -u ptsi-accounting -f      # ดู log</pre></div><h3 class="sub">4.5 HTTPS ด้วย nginx</h3><ol class="steps"><li>วางใบรับรอง TLS ที่ <code>/etc/nginx/ssl/ptsi-accounting.crt</code> และ <code>.key</code> (ใช้ใบรับรององค์กร หรือ Let’s Encrypt)</li><li>คัดลอก <code>deploy/nginx-ptsi-accounting.conf</code> ไป <code>/etc/nginx/conf.d/</code> แล้วแก้ <code>server_name</code></li><li><code>sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code></li><li>ตั้ง <code>client_max_body_size</code> ให้ ≥ 5m หากใช้ฟีเจอร์แนบไฟล์/นำเข้าไฟล์ (แอปรับไฟล์ได้ถึง 4 MB — ค่าในไฟล์ตัวอย่างคือ 2m จะทำให้อัปโหลดไฟล์ใหญ่ไม่ผ่าน)</li><li>เปิดพอร์ต 443/80 บนไฟร์วอลล์ (<code>firewall-cmd --add-service=https --permanent</code> หรือ <code>ufw allow 443</code>) · SELinux (EL): <code>setsebool -P httpd_can_network_connect 1</code></li></ol><h3 class="sub">4.6 สำรองข้อมูลอัตโนมัติ</h3><div class="code-block"><div class="code-label">bash</div><pre># สร้าง ~/.pgpass ของ user ที่รัน (chmod 600)  localhost:5432:ptsi_accounting:acct_owner:&lt;password&gt;
+sudo mkdir -p /backup/ptsi-accounting
+sudo chmod +x /opt/ptsi-accounting/deploy/backup.sh
+( crontab -l; echo &quot;0 1 * * * /opt/ptsi-accounting/deploy/backup.sh &gt;&gt; /var/log/ptsi-backup.log 2&gt;&amp;1&quot; ) | crontab -
+# ทดสอบกู้คืนเป็นระยะ:  createdb ptsi_restore_test &amp;&amp; pg_restore -d ptsi_restore_test /backup/ptsi-accounting/&lt;ไฟล์&gt;.dump</pre></div></section><section id="windows"><div class="sec-head"><div class="sec-num">5</div><h2>ติดตั้งบน Windows Server<small>Windows</small></h2></div><p class="sec-lede">ยังไม่ได้ทดสอบบนเครื่องจริง</p><ol class="steps"><li>ติดตั้ง <b>PostgreSQL 16</b> (ตัวติดตั้ง EDB — จำรหัสผ่าน postgres, port 5432) เลือก Stack Builder/pgAdmin ตามต้องการ</li><li>ติดตั้ง <b>Node.js 20 LTS</b> (ตัวติดตั้ง .msi จาก nodejs.org) ตรวจด้วย <code>node -v</code> ใน PowerShell</li><li>สร้างฐานข้อมูล: <code>&amp; "C:\Program Files\PostgreSQL\16\bin\createdb.exe" -U postgres -E UTF8 ptsi_accounting</code></li><li>รันสคริปต์ด้วย psql ตามลำดับบทที่ 3 (ตัวอย่าง PowerShell ด้านล่าง)</li><li>คัดลอกโฟลเดอร์ <code>app</code> ไป <code>C:\ptsi-accounting\app</code> · สร้างไฟล์ <code>.env</code> (ตามบทที่ 4.3 แต่ <code>PGHOST=localhost</code>) · รัน <code>npm install --omit=dev</code></li><li>ให้รันเป็น Windows Service: <b>NSSM</b> (<code>nssm install PTSI-Accounting "C:\Program Files\nodejs\node.exe" server.js</code> ตั้ง AppDirectory เป็นโฟลเดอร์ app) หรือ <b>PM2</b> (<code>npm i -g pm2 pm2-windows-startup; pm2 start server.js --name ptsi; pm2 save</code>)</li><li>HTTPS: ใช้ IIS + URL Rewrite/ARR ชี้ไป <code>http://127.0.0.1:3001</code> หรือ nginx for Windows · เปิดไฟร์วอลล์พอร์ต 443</li><li>สำรองข้อมูล: Task Scheduler รัน <code>pg_dump.exe -U acct_owner -d ptsi_accounting -Fc -f D:\backup\ptsi_%date%.dump</code> ทุกคืน (ตั้ง <code>%APPDATA%\postgresql\pgpass.conf</code> สำหรับรหัสผ่าน)</li></ol><div class="code-block"><div class="code-label">PowerShell — รันสคริปต์ DB</div><pre>$env:PGPASSWORD=&quot;&lt;postgres password&gt;&quot;
+$psql=&quot;C:\Program Files\PostgreSQL\16\bin\psql.exe&quot;
+function Run($f){ &amp; $psql -U postgres -d ptsi_accounting -v ON_ERROR_STOP=1 -q -f $f }
+cd C:\ptsi-accounting\db\neon_editor
+Run neon_1_roles_schema.sql; Run neon_2_functions.sql; Run neon_3_views_seed.sql
+Get-ChildItem data_migration\0[1-7]_*.sql | Sort-Object Name | % { Run $_.FullName }
+5..21 | % { Get-ChildItem &quot;neon_$($_)_*.sql&quot; | % { Run $_.FullName } }
+Run neon_4_healthcheck.sql</pre></div></section><section id="mac"><div class="sec-head"><div class="sec-num">6</div><h2>ติดตั้งบน macOS (สำหรับพัฒนา/ทดสอบ)<small>macOS</small></h2></div><p class="sec-lede">ยังไม่ได้ทดสอบบนเครื่องจริง — แนะนำใช้เพื่อพัฒนา/ทดลองเท่านั้น</p><div class="code-block"><div class="code-label">Terminal (Homebrew)</div><pre>brew install postgresql@16 node@20
+brew services start postgresql@16
+createdb ptsi_accounting
+cd db/neon_editor
+for f in neon_1_roles_schema.sql neon_2_functions.sql neon_3_views_seed.sql data_migration/0[1-7]_*.sql; do psql -d ptsi_accounting -v ON_ERROR_STOP=1 -q -f $f; done
+for n in $(seq 5 21); do psql -d ptsi_accounting -v ON_ERROR_STOP=1 -q -f neon_${n}_*.sql; done
+cd ../../app &amp;&amp; npm install --omit=dev &amp;&amp; cp .env.example .env   # แก้ PGPASSWORD
+node server.js   # เปิด http://127.0.0.1:3001</pre></div><p class="note">บน macOS ผู้ใช้ Homebrew เป็น superuser ของ PostgreSQL อยู่แล้ว จึงไม่ต้องระบุ <code>-U postgres</code> · ต้องการให้รันตลอดให้สร้าง launchd plist ที่เรียก <code>node server.js</code> หรือใช้ PM2</p></section><section id="docker"><div class="sec-head"><div class="sec-num">7</div><h2>ติดตั้งด้วย Docker (ทางเลือก)<small>Docker</small></h2></div><p class="sec-lede">ซอร์สปัจจุบันยังไม่มี Dockerfile/compose — ตัวอย่างนี้เป็นแนวทางที่ต้องทดสอบก่อนใช้</p><div class="code-block"><div class="code-label">Dockerfile (ตัวอย่าง)</div><pre>FROM node:20-alpine
+WORKDIR /app
+COPY app/package*.json ./
+RUN npm install --omit=dev
+COPY app/ ./
+ENV HTTP_HOST=0.0.0.0 HTTP_PORT=3001
+USER node
+EXPOSE 3001
+CMD [&quot;node&quot;,&quot;server.js&quot;]</pre></div><div class="code-block"><div class="code-label">docker-compose.yml (ตัวอย่าง)</div><pre>services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD: change_me, POSTGRES_DB: ptsi_accounting }
+    volumes: [ &quot;pgdata:/var/lib/postgresql/data&quot; ]
+  app:
+    build: .
+    depends_on: [ db ]
+    environment: { PGHOST: db, PGDATABASE: ptsi_accounting, PGUSER: acct_app, PGPASSWORD: &quot;&lt;app password&gt;&quot;, PGSSL: &quot;false&quot; }
+    ports: [ &quot;127.0.0.1:3001:3001&quot; ]
+volumes: { pgdata: {} }</pre></div><p class="note">รันสคริปต์ฐานข้อมูลครั้งแรกด้วย <code>docker compose exec -T db psql -U postgres -d ptsi_accounting -f - &lt; file.sql</code> ตามลำดับบทที่ 3</p></section><section id="cloud"><div class="sec-head"><div class="sec-num">8</div><h2>Deploy บน Vercel + Neon (ที่ใช้งานปัจจุบัน)<small>Vercel + Neon</small></h2></div><h3 class="sub">8.1 Neon (ฐานข้อมูล)</h3><ol class="steps"><li>สมัคร neon.tech สร้าง Project/Database ชื่อ <code>ptsi_accounting</code> (แนะนำ region ใกล้ผู้ใช้ เช่น Singapore)</li><li>เปิด <b>SQL Editor</b> เลือกฐานข้อมูลนี้ แล้ววางและรันสคริปต์ตามลำดับในบทที่ 3 ทีละไฟล์ (รัน neon_1 หลังแก้รหัสผ่าน 3 ตัว)</li><li>รัน <code>neon_4_healthcheck.sql</code> ตรวจจำนวนอ็อบเจกต์</li><li>คัดลอก <b>Connection string แบบ Pooled</b> ของ role <code>acct_app</code> (รูปแบบ <code>postgresql://acct_app:…@…-pooler….neon.tech/ptsi_accounting?sslmode=require</code>)</li></ol><h3 class="sub">8.2 GitHub</h3><ol class="steps"><li>สร้าง repository (private แนะนำ) แล้วอัปโหลดไฟล์ในโฟลเดอร์ <code>app</code> ไว้ที่ root ของ repo ได้แก่ <code>server.js, config.js, package.json, vercel.json, .vercelignore, api/index.js, public/…</code> (<b>ห้ามอัปโหลด <code>.env</code></b>)</li><li>แก้ไฟล์ภายหลัง: GitHub → Add file → Upload files (เขียนทับไฟล์เดิม) → Commit — Vercel จะ deploy ให้อัตโนมัติ</li></ol><h3 class="sub">8.3 Vercel</h3><ol class="steps"><li>Import repository ใน Vercel (Framework = Other) — ไม่ต้องตั้ง build command</li><li>ตั้ง <b>Environment Variables</b> ตามตารางด้านล่าง ครบทุก Environment (Production/Preview)</li><li>กด Deploy และรอสถานะ <b>Ready</b> · <b>หลังเปลี่ยน Environment Variable ต้อง Redeploy</b> จึงมีผล</li><li>เปิดเว็บ → เข้าสู่ระบบ <code>admin</code> → <b>เปลี่ยนรหัสผ่านทันที</b> (Settings → ผู้ใช้งาน)</li><li>ล้างแคชเบราว์เซอร์ (Ctrl+F5) หลังอัปเดตหน้าเว็บ</li></ol><div class="table-wrap"><table class=""><thead><tr><th>ตัวแปร</th><th>ตัวอย่าง/ค่า</th><th>จำเป็น</th><th>คำอธิบาย</th></tr></thead><tbody><tr><td><code>DATABASE_URL</code></td><td>postgresql://acct_app:…-pooler…/ptsi_accounting?sslmode=require</td><td>ใช่</td><td>Neon pooled connection string</td></tr><tr><td><code>PG_POOL_MAX</code></td><td>3 (ค่าเริ่มต้นบน Vercel)</td><td>ไม่</td><td>จำนวน connection ต่อ instance</td></tr><tr><td><code>AI_PROVIDER</code></td><td>gemini หรือ anthropic</td><td>ไม่</td><td>ถ้าไม่ตั้ง จะเลือกตามคีย์ที่มี</td></tr><tr><td><code>GEMINI_API_KEY</code></td><td>…</td><td>ไม่</td><td>เปิดนำเข้าจากไฟล์ด้วย Gemini</td></tr><tr><td><code>GEMINI_MODEL</code> · <code>GEMINI_FALLBACK_MODEL</code> · <code>GEMINI_THINKING</code></td><td>gemini-3.8-flash · (ว่าง) · low</td><td>ไม่</td><td>รุ่นหลัก/สำรอง/ระดับการคิด (off = ไม่ส่งพารามิเตอร์)</td></tr><tr><td><code>ANTHROPIC_API_KEY</code> · <code>ANTHROPIC_MODEL</code></td><td>… · claude-sonnet-5-5</td><td>ไม่</td><td>ทางเลือก Claude</td></tr></tbody></table></div><h3 class="sub">8.4 ไฟล์ vercel.json</h3><div class="code-block"><div class="code-label">app/vercel.json</div><pre>{
+  &quot;functions&quot;: { &quot;api/index.js&quot;: { &quot;maxDuration&quot;: 30, &quot;includeFiles&quot;: &quot;{config.js}&quot; } },
+  &quot;rewrites&quot;: [ { &quot;source&quot;: &quot;/api/(.*)&quot;, &quot;destination&quot;: &quot;/api&quot; } ],
+  &quot;headers&quot;: [ { &quot;source&quot;: &quot;/(.*)&quot;, &quot;headers&quot;: [ { &quot;key&quot;: &quot;Cache-Control&quot;, &quot;value&quot;: &quot;no-store&quot; } ] } ]
+}</pre></div><p class="note">ฟังก์ชัน serverless มีเวลาทำงานสูงสุด 30 วินาทีต่อคำขอ และ Hobby plan จำกัดการใช้เชิงพาณิชย์ — ดูรายละเอียดความเสี่ยงในเอกสาร 07</p></section><section id="verify"><div class="sec-head"><div class="sec-num">9</div><h2>ตรวจสอบหลังติดตั้ง<small>Verification</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>ตรวจอะไร</th><th>วิธี</th><th>ผลที่ถูกต้อง</th></tr></thead><tbody><tr><td>API ตอบ</td><td><code>curl -s https://&lt;host&gt;/api/health</code> (หรือเปิดหน้าเว็บ)</td><td>HTTP 200 / หน้า Login ขึ้น</td></tr><tr><td>ฐานข้อมูล</td><td>รัน <code>neon_4_healthcheck.sql</code></td><td>55 ตาราง · 9 view · 87 ฟังก์ชัน · 28 trigger · ไม่มีรายการ ERROR</td></tr><tr><td>เข้าสู่ระบบ</td><td>admin + รหัสเริ่มต้น แล้วเปลี่ยนรหัสผ่านใหม่</td><td>เข้าได้ → Dashboard ขึ้น</td></tr><tr><td>การลงบัญชี</td><td>สร้างใบเสนอราคา → ใบแจ้งหนี้ → รับเงิน แล้วดู Dashboard</td><td>JOURNAL ไม่สมดุล = 0 · Trial Balance เดบิต = เครดิต</td></tr><tr><td>สิทธิ์</td><td>ล็อกอินเป็น VIEWER ทดลองสร้างเอกสาร</td><td>ปุ่มถูกซ่อน/API ตอบ 403 FORBIDDEN</td></tr><tr><td>AI import (ถ้าเปิด)</td><td>Master Data → Customers → นำเข้าจากไฟล์</td><td>ฟอร์มถูกกรอก — ถ้าแจ้งว่ายังไม่ได้ตั้งค่า KEY ให้ตรวจ env แล้ว redeploy</td></tr><tr><td>สำรอง/กู้คืน</td><td>รัน backup.sh แล้ว restore ลงฐานทดสอบ</td><td>pg_restore -l อ่านได้, ข้อมูลครบ</td></tr></tbody></table></div></section><section id="ops"><div class="sec-head"><div class="sec-num">10</div><h2>อัปเกรด สำรอง และกู้คืน<small>Operations</small></h2></div><h3 class="sub">อัปเกรดแอป</h3><ol class="steps"><li>สำรองฐานข้อมูลก่อนเสมอ</li><li>เปลี่ยนไฟล์ <code>server.js</code>/<code>public/index.html</code> (Cloud: อัปโหลด GitHub · On-prem: คัดลอกไฟล์แล้ว <code>systemctl restart ptsi-accounting</code>)</li><li>หากมีสคริปต์ neon_NN ใหม่ ให้รันตามลำดับเลขบนฐานข้อมูลเดิม แล้วรัน neon_4 ตรวจ</li></ol><h3 class="sub">กู้คืนฐานข้อมูล (On-premise)</h3><div class="code-block"><div class="code-label">bash</div><pre>sudo systemctl stop ptsi-accounting
+sudo -u postgres dropdb ptsi_accounting &amp;&amp; sudo -u postgres createdb -E UTF8 ptsi_accounting
+# role ต้องมีอยู่ (acct_owner/acct_app/acct_report) — สร้างผ่านบทที่ 3 ขั้นที่ 1 หรือ pg_dumpall --roles-only
+sudo -u postgres pg_restore -d ptsi_accounting --no-owner --role=acct_owner /backup/ptsi-accounting/&lt;ไฟล์&gt;.dump
+sudo systemctl start ptsi-accounting</pre></div><h3 class="sub">Neon</h3><p>ใช้ Branch/Point-in-time restore ของ Neon (ช่วงเวลาย้อนหลังขึ้นกับแพ็กเกจ) และควร <code>pg_dump</code> ออกมาเก็บภายนอกเป็นระยะ: <code>pg_dump "$DATABASE_URL_OWNER" -Fc -f ptsi.dump</code></p></section><section id="trouble"><div class="sec-head"><div class="sec-num">11</div><h2>แก้ปัญหาที่พบบ่อย<small>Troubleshooting</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>อาการ</th><th>สาเหตุที่พบบ่อย</th><th>วิธีแก้</th></tr></thead><tbody><tr><td>รัน neon_1 แล้วขึ้น “ยังไม่ได้แก้รหัสผ่าน”</td><td>ยังไม่ได้เปลี่ยนข้อความ ตั้งรหัสผ่านที่นี่</td><td>แก้ตัวแปร pw_owner/pw_app/pw_report ≥ 12 ตัว แล้วรันใหม่</td></tr><tr><td>data_migration 05 ล้มเหลวเรื่อง foreign key</td><td>ยังไม่ได้รัน 02/03 (ข้อมูลตำบล)</td><td>รัน 01→07 เรียงตามเลขตั้งแต่ต้น</td></tr><tr><td>permission denied for schema acct / function</td><td>ผู้ใช้ไม่ใช่ acct_app หรือสคริปต์ GRANT ไม่ครบ</td><td>ตรวจ DATABASE_URL ใช้ role acct_app · รัน neon_19/neon_21 ซ้ำ</td></tr><tr><td>เชื่อมต่อ DB ไม่ได้บน Vercel</td><td>ใช้ direct endpoint แทน pooled / ยังไม่ redeploy หลังตั้ง env</td><td>ใช้ host ที่มี -pooler · Redeploy</td></tr><tr><td>หน้าแรกช้า 5–10 วินาที</td><td>Neon auto-suspend + Vercel cold start</td><td>รอครั้งแรกของวัน หรืออัปเกรดแพ็กเกจ</td></tr><tr><td>ขึ้น 502 หลัง nginx</td><td>Node.js ไม่ได้รัน / พอร์ตไม่ตรง</td><td><code>systemctl status ptsi-accounting</code> · ตรวจ HTTP_PORT=3001</td></tr><tr><td>อัปโหลดไฟล์ไม่ผ่าน</td><td>nginx client_max_body_size 2m น้อยกว่าขนาดไฟล์</td><td>ตั้ง ≥ 5m</td></tr><tr><td>นำเข้าจากไฟล์ขึ้น 503/429</td><td>คิวหรือโควตาของ Gemini เต็ม</td><td>ลองใหม่ · ตั้ง GEMINI_FALLBACK_MODEL · ใช้ Anthropic</td></tr><tr><td>ผู้ใช้เห็นหน้าเก่า</td><td>แคชเบราว์เซอร์</td><td>Ctrl+F5</td></tr></tbody></table></div></section>
+    <footer class="page-footer">PTSI Accounting — คู่มือ Install / Deploy · PTS Innovations Co., Ltd. · อัปเดต 2026-10-06</footer>
+  </main>
+</div>
+<script>
+(function(){var L=[].slice.call(document.querySelectorAll('.nav-link'));var S=L.map(function(a){return document.querySelector(a.getAttribute('href'))});
+function on(){var y=window.scrollY+120,i=0;S.forEach(function(s,k){if(s&&s.offsetTop<=y)i=k});L.forEach(function(a,k){a.classList.toggle('active',k===i)})}
+window.addEventListener('scroll',on);on();})();
+</script>
+</body>
+</html>

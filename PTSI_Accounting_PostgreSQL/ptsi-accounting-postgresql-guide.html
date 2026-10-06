@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>PTSI-Accounting PostgreSQL Port — คู่มือ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#2A5FB0;
+    --accent-dark:#1E4685;
+    --accent-soft:#E7EEFA;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E7EEFA;   --badge-required-fg:#1E4685;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#5E8FDB);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:12px; letter-spacing:.3px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#C4D7F2; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">PG</div>
+      <div class="brand-text">
+        <b>PTSI-Accounting</b>
+        <span>PostgreSQL + Node.js Port</span>
+      </div>
+    </div>
+
+    <div class="nav-section-title">เริ่มต้น</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#overview"><span class="dot"></span>ภาพรวม</a></li>
+    </ul>
+
+    <div class="nav-section-title">โครงสร้างระบบ (5 ชั้น)</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#layer-db"><span class="num">1</span>Database Schema (acct)</a></li>
+      <li><a class="nav-link" href="#layer-functions"><span class="num">2</span>Business Logic (fn_*)</a></li>
+      <li><a class="nav-link" href="#layer-api"><span class="num">3</span>Node.js API</a></li>
+      <li><a class="nav-link" href="#layer-ui"><span class="num">4</span>Web UI</a></li>
+      <li><a class="nav-link" href="#layer-deploy"><span class="num">5</span>Deployment</a></li>
+    </ul>
+
+    <div class="nav-section-title">อื่นๆ</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#reconcile"><span class="dot"></span>จุดที่แก้ไข (Reconciliation)</a></li>
+      <li><a class="nav-link" href="#gotchas"><span class="dot"></span>ข้อควรระวัง</a></li>
+      <li><a class="nav-link" href="#next-steps"><span class="dot"></span>ขั้นตอนถัดไป</a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <b>จัดทำโดย</b>
+      อ้างอิงโครงสร้างจากโปรเจกต์ Smart ER<br>
+      PTSI-Accounting — พอร์ตจาก Oracle APEX (App 151494)
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+
+    <!-- ============ 0. OVERVIEW ============ -->
+    <section id="overview">
+      <h1 style="font-size:26px; margin:0 0 4px">PTSI-Accounting — พอร์ตเป็น PostgreSQL + Node.js</h1>
+      <p style="color:var(--ink-soft); margin:0">ระบบบัญชีชุดเดิม (Oracle APEX App 151494) สร้างขึ้นใหม่ทั้งชุดบน PostgreSQL 16 — ตรรกะธุรกิจอยู่ในฐานข้อมูลทั้งหมด, REST API เป็นชั้นบางๆ ผ่านเข้าไป, และ Web UI แบบไม่มี build step เดียวกับแนวทางของ Smart ER</p>
+
+      <div class="meta-row">
+        <span class="chip">ต้นแบบ: <b>PTSI-Accounting (Oracle APEX)</b></span>
+        <span class="chip">Database: <b>PostgreSQL 16</b></span>
+        <span class="chip">Schema: <b>acct</b></span>
+        <span class="chip">API Port: <b>3001</b></span>
+        <span class="chip">อ้างอิงโครงสร้าง: <b>Smart ER (smart-er-postgresql)</b></span>
+        <span class="chip">อัปเดต: <b>2026-09-26</b></span>
+      </div>
+
+      <div class="callout">
+        <div class="ic">✓</div>
+        <div class="body">
+          <div class="head"><strong>สรุปผลลัพธ์</strong><span class="pill done">ทดสอบผ่านจริง (live end-to-end)</span></div>
+          สร้างโดยสอง agent คู่ขนาน — ชุดหนึ่งทำฐานข้อมูล (schema 39 ตาราง + ฟังก์ชัน 22 ตัว + view 5 ตัว) อีกชุดทำ Node.js API + Web UI —
+          จากสเปกเดียวกันแต่ไม่เห็นผลงานของกันและกัน จึงต้องผ่านขั้นตอน <b>reconciliation</b> เพื่อไล่เทียบ column/field ทุกจุดระหว่างสองฝั่ง
+          (ดูหัวข้อ "จุดที่แก้ไข" ด้านล่าง) ก่อนจะยืนยันด้วยการตั้ง PostgreSQL จริง รัน schema จริง เปิด Node server จริง แล้วยิง request
+          ผ่านทุก endpoint หลัก — ไม่ใช่แค่ตรวจโค้ดด้วยสายตา
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>Database <span class="tag">db/</span></h3>
+          <div class="kv"><span>ตาราง</span><span>39</span></div>
+          <div class="kv"><span>ฟังก์ชัน (fn_*)</span><span>22</span></div>
+          <div class="kv"><span>View (v_*)</span><span>5</span></div>
+          <div class="kv"><span>Audit trigger</span><span>12 ตาราง</span></div>
+          <div class="kv"><span>Role</span><span>acct_owner / acct_app / acct_report</span></div>
+        </div>
+        <div class="card">
+          <h3>Application <span class="tag">app/</span></h3>
+          <div class="kv"><span>REST endpoint</span><span>38</span></div>
+          <div class="kv"><span>หน้าจอ Web UI</span><span>8 หน้า (รวม Purchasing)</span></div>
+          <div class="kv"><span>Dependency</span><span>express + pg เท่านั้น</span></div>
+          <div class="kv"><span>Node</span><span>&gt;= 20</span></div>
+        </div>
+        <div class="card">
+          <h3>Deployment <span class="tag">deploy/</span></h3>
+          <div class="kv"><span>Service</span><span>systemd (ptsi-accounting.service)</span></div>
+          <div class="kv"><span>Reverse proxy</span><span>nginx + TLS</span></div>
+          <div class="kv"><span>Backup</span><span>pg_dump รายวัน (cron)</span></div>
+        </div>
+      </div>
+
+      <div class="diagram-card">
+<pre class="mermaid">
+flowchart LR
+  UI["Web UI<br/>public/index.html<br/>(vanilla JS, ไม่มี build)"] -- "fetch /api/*<br/>Bearer token" --> API["Node.js API<br/>server.js (Express)"]
+  API -- "SELECT v_*, table<br/>(อ่านตรง, สิทธิ์จำกัด)" --> DB[("PostgreSQL 16<br/>schema acct")]
+  API -- "SELECT fn_*(...)<br/>(เขียนทุกจุดผ่านฟังก์ชัน)" --> FN["fn_* functions<br/>SECURITY DEFINER"]
+  FN --> DB
+  DB -- "role: acct_app<br/>(ไม่มีสิทธิ์ INSERT/UPDATE/DELETE ตรง)" --> API
+</pre>
+      </div>
+      <p style="font-size:12.5px; color:var(--ink-faint); margin-top:10px">ตรรกะธุรกิจทั้งหมด (เลขที่เอกสาร, ภาษี, การผ่านรายการบัญชี, กติกา error) อยู่ในชั้นฐานข้อมูล — Node.js เป็นเพียงชั้นแปลง HTTP ↔ SQL เท่านั้น</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th style="width:36px">#</th><th>ชั้น</th><th>เนื้อหา</th><th style="width:150px">สถานะ</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">1</td><td><a href="#layer-db">Database Schema</a></td><td>39 ตาราง, 3 role, 5 view, สิทธิ์แบบ least-privilege</td><td><span class="badge required">ทดสอบผ่าน (live)</span></td></tr>
+            <tr><td class="num">2</td><td><a href="#layer-functions">Business Logic (fn_*)</a></td><td>22 ฟังก์ชัน PL/pgSQL — จุดเขียนข้อมูลเพียงจุดเดียว</td><td><span class="badge required">ทดสอบผ่าน (live)</span></td></tr>
+            <tr><td class="num">3</td><td><a href="#layer-api">Node.js API</a></td><td>Express + pg, 38 endpoint, auth แบบ token</td><td><span class="badge required">ทดสอบผ่าน (live)</span></td></tr>
+            <tr><td class="num">4</td><td><a href="#layer-ui">Web UI</a></td><td>Dashboard/Quotations/Invoices/Receipts/Master Data/Settings</td><td><span class="badge required">ทดสอบผ่าน (live)</span></td></tr>
+            <tr><td class="num">5</td><td><a href="#layer-deploy">Deployment</a></td><td>systemd + nginx + backup script</td><td><span class="badge optional">ยังไม่ได้ deploy จริง</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 1. DATABASE ============ -->
+    <section id="layer-db">
+      <div class="sec-head"><div class="sec-num">1</div><h2>Database Schema<small>db/00_create_db.sql, 01_schema.sql, 03_views_security.sql, 07_audit_triggers.sql — schema เดียวชื่อ "acct"</small></h2></div>
+      <p class="sec-lede">ย้ายทุกตารางจากระบบ Oracle APEX เดิม (customers, quotations, invoices, receipts, purchase_requests/orders, journal_entries ฯลฯ) มาเป็น PostgreSQL พร้อมโมเดลสิทธิ์แบบ least-privilege 3 ระดับ</p>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>สามระดับสิทธิ์ (Role)<span>ทุก role ตั้ง search_path = acct, public อัตโนมัติ</span></h4>
+          <span class="badge required">Required</span>
+        </div>
+        <div class="fields">
+          <span class="field">acct_owner — เจ้าของ schema, รัน DDL ทั้งหมด</span>
+          <span class="field new">acct_app — สิทธิ์ EXECUTE บน fn_* + SELECT บน view/master data เท่านั้น</span>
+          <span class="field">acct_report — SELECT อย่างเดียวทุกตาราง ยกเว้น app_user/app_session</span>
+        </div>
+        <div class="flow-note">
+          <b>ไม่มีสิทธิ์เขียนตรง:</b>&nbsp; <code>acct_app</code> (role ที่ Node.js API ใช้เชื่อมต่อจริง) ไม่มีสิทธิ์ <code>INSERT/UPDATE/DELETE</code>
+          บนตารางธุรกรรมเลยแม้แต่ตัวเดียว — ทุกการเขียนข้อมูลต้องผ่านฟังก์ชัน <code>fn_*</code> เท่านั้น (ดูหัวข้อถัดไป) ทดสอบยืนยันแล้วว่า
+          <code>INSERT</code> ตรงจาก <code>acct_app</code> ถูกปฏิเสธด้วย <code>permission denied</code> จริง
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>กลุ่มตารางหลัก (39 ตาราง)</h4>
+          <span class="badge foundation">Foundation</span>
+        </div>
+        <div class="fields">
+          <span class="field">ข้อมูลหลัก: customers, vendors, employees, items, chart_of_account_*</span>
+          <span class="field">ขาย/ลูกหนี้: quotations, delivery_notes, invoices, billing_notes, receipts</span>
+          <span class="field">ซื้อ/เจ้าหนี้: purchase_requests, purchase_orders</span>
+          <span class="field">บัญชีแยกประเภท: journal_entries, journal_entry_lines, system_gl_mappings</span>
+          <span class="field">ภาษี: tax_rates, tax_filings, tax_filing_details</span>
+          <span class="field">ระบบ: app_user, app_session, setting, audit_log</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. FUNCTIONS ============ -->
+    <section id="layer-functions">
+      <div class="sec-head"><div class="sec-num">2</div><h2>Business Logic — fn_* Functions<small>db/02_functions.sql — 31 ฟังก์ชัน PL/pgSQL, จุดเขียนข้อมูลเพียงจุดเดียวของทั้งระบบ</small></h2></div>
+      <p class="sec-lede">ตรรกะทางบัญชีทั้งหมด (เลขที่เอกสาร, VAT, การผ่านรายการเข้าบัญชีแยกประเภทแบบ debit=credit เสมอ) อยู่ในฟังก์ชันเหล่านี้ — ไม่ใช่ในโค้ด Node.js</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:36px">#</th><th>กลุ่ม</th><th>ฟังก์ชันหลัก</th><th>ทำอะไร</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Auth</td><td><code>fn_login / fn_session / fn_logout / fn_user_create</code></td><td>ล็อกอินด้วย token (ไม่ใช้ cookie), เก็บ session ใน app_session</td></tr>
+            <tr><td class="num">2</td><td>Settings</td><td><code>fn_setting / fn_setting_set</code></td><td>ค่าตั้งค่าระบบแบบ key/value</td></tr>
+            <tr><td class="num">3</td><td>Master Data</td><td><code>fn_customer_upsert, fn_vendor_upsert, fn_item_upsert, fn_employee_upsert, fn_account_upsert</code></td><td>เพิ่ม/แก้ไขข้อมูลหลัก — แยก insert/update จากการมี id ใน payload</td></tr>
+            <tr><td class="num">4</td><td>ใบเสนอราคา</td><td><code>fn_quotation_create, fn_quotation_set_status, fn_quotation_json</code></td><td>ออกเลขที่อัตโนมัติ (<code>Q-&lt;category&gt;-0001</code>), คำนวณ VAT, บังคับต้องมีเลข PO ลูกค้าก่อนเปลี่ยนเป็น ACCEPTED</td></tr>
+            <tr><td class="num">5</td><td>ใบแจ้งหนี้</td><td><code>fn_invoice_create_from_quotation, fn_invoice_post</code></td><td>สร้างจากใบเสนอราคาที่ ACCEPTED แล้ว, ผ่านรายการเข้า GL แบบสมดุล (debit AR / credit VAT+รายได้)</td></tr>
+            <tr><td class="num">6</td><td>ใบเสร็จรับเงิน</td><td><code>fn_receipt_create, fn_receipt_post</code></td><td>รองรับ 2 แบบ — รับชำระตามใบแจ้งหนี้ (CREDIT_COLLECTION) และขายสดออกใบเสร็จทันที (CASH_SALE)</td></tr>
+            <tr><td class="num">7</td><td>จัดซื้อ</td><td><code>fn_pr_create, fn_pr_set_status, fn_po_create_from_pr</code></td><td>ใบขอซื้อ → ใบสั่งซื้อ (สร้างตรงได้โดยไม่ผ่าน PR)</td></tr>
+            <tr><td class="num">8</td><td>ภาษี</td><td><code>fn_tax_filing_generate, fn_tax_rate_upsert</code></td><td>สรุปยอดยื่นภาษี PP30 (VAT ขาย-ซื้อ) และ PND3/PND53 (หัก ณ ที่จ่าย) รายเดือน + master อัตราภาษี</td></tr>
+            <tr><td class="num">9</td><td>ข้อมูลบริษัท</td><td><code>fn_company_profile_upsert</code></td><td>ข้อมูลบริษัทผู้ออกเอกสาร (ปกติมีแถวเดียว) รวมอัปโหลดตราประทับเป็น bytea</td></tr>
+            <tr><td class="num">10</td><td>ใบส่งของ</td><td><code>fn_delivery_note_create, fn_delivery_note_set_status</code></td><td>ออกเลขที่ <code>DN-YYYYMMDD-NNNNN</code>, คัดลอกรายการจากใบเสนอราคาอัตโนมัติถ้าไม่ระบุรายการเอง</td></tr>
+            <tr><td class="num">11</td><td>ใบวางบิล</td><td><code>fn_billing_note_create, fn_billing_note_set_status</code></td><td>รวมหลายใบแจ้งหนี้ของลูกค้ารายเดียวกันเข้าใบวางบิลใบเดียว ออกเลขที่ <code>BN-YYYYMMDD-NNNNN</code></td></tr>
+            <tr><td class="num">12</td><td>GL Mapping</td><td><code>fn_gl_mapping_set</code></td><td>ผูก control account (เช่น AR_CONTROL, VAT_OUTPUT) กับรหัสบัญชีจริงในผังบัญชี — ใช้ตอน auto-post journal</td></tr>
+            <tr><td class="num">13</td><td>ไฟล์แนบ</td><td><code>fn_attachment_upload, fn_attachment_delete</code></td><td>แนบไฟล์ (เก็บเป็น bytea) เข้ากับเอกสารได้ 8 ประเภท (quotations, delivery_notes, invoices, billing_notes, receipts, purchase_requests, purchase_orders, tax_filings)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>กติกาการแจ้ง error<span>ทุกฟังก์ชันใช้รูปแบบเดียวกัน แปลงเป็น HTTP status ฝั่ง Node ได้อัตโนมัติ</span></h4>
+          <span class="badge critical">Critical</span>
+        </div>
+        <div class="code-block">
+          <div class="code-label">PL/pgSQL</div>
+<pre>RAISE EXCEPTION 'ERROR_CODE: ข้อความภาษาไทยอธิบายสาเหตุ';
+-- เช่น: 'PO_REQUIRED: ต้องระบุเลขที่/วันที่ใบสั่งซื้อลูกค้าก่อนตั้งสถานะ ACCEPTED'
+--       'ALREADY_POSTED: ใบแจ้งหนี้ INV-20260926-00001 ถูกลงบัญชีแล้ว'</pre>
+        </div>
+        <div class="flow-note">
+          ฝั่ง Node (<code>server.js</code>) ใช้ regex <code>/^([A-Z_]+):\s*(.*)$/s</code> แยกโค้ดหน้า ":" ออกมาก่อนข้อความ แล้ว map เข้า HTTP status
+          ผ่านตาราง <code>ERR_STATUS</code> — โค้ดใหม่ที่ฐานข้อมูล raise เพิ่ม (เช่น <code>DUPLICATE_CODE</code>, <code>*_NOT_FOUND</code>, <code>GL_MAPPING_MISSING</code>)
+          ต้องเพิ่มเข้าตารางนี้ด้วยไม่เช่นนั้นจะตกไปเป็น HTTP 400 ทั่วไปเสมอ
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>Audit Trail อัตโนมัติ<span>db/07_audit_triggers.sql — trigger เดียวใช้ร่วมกัน 12 ตาราง</span></h4>
+          <span class="badge foundation">Foundation</span>
+        </div>
+        <div class="fields">
+          <span class="field new">fn_audit_trigger() — generic, SECURITY DEFINER</span>
+          <span class="field">customers, vendors, employees, items, chart_of_account_details, setting</span>
+          <span class="field">quotations, invoices, receipts, purchase_requests, purchase_orders, journal_entries, tax_filings</span>
+          <span class="field new">company_profile, delivery_notes, billing_notes, system_gl_mappings, tax_rates</span>
+        </div>
+        <div class="flow-note">
+          ทุกฟังก์ชัน <code>fn_*</code> ที่เขียนข้อมูล ตั้งค่า <code>PERFORM set_config('acct.audit_user', p_by, true)</code>
+          เป็นบรรทัดแรกหลัง <code>BEGIN</code> — เป็น session variable แบบ transaction-local (<code>is_local=true</code>) ที่ trigger อ่านออกมาใช้เป็น
+          <code>changed_by</code> จึงรู้ว่า "ใคร" เป็นคนสั่งเขียนแม้ว่า role จริงที่เชื่อมต่อฐานข้อมูลจะเป็น <code>acct_app</code> เสมอก็ตาม
+          แต่ละแถวที่ INSERT/UPDATE/DELETE จะถูกบันทึกเป็น jsonb เต็มแถว (ก่อน/หลัง) ลงตาราง <code>audit_log</code> — อ่านได้จาก role
+          <code>acct_report</code> เท่านั้น (ยังไม่เปิด endpoint ให้ตัวแอปดึงมาแสดงในเว็บ)
+        </div>
+        <div class="flow-note warn">
+          <b>ไม่ครอบคลุมทุกตาราง:</b>&nbsp; ตั้งใจไม่ผูก trigger กับ <code>app_user</code>/<code>app_session</code> (มี password_hash/token
+          ไม่ควรถูกคัดลอกเข้า audit log) และไม่ผูกกับตารางรายการย่อย เช่น <code>quotation_items</code>/<code>po_items</code>
+          (ตรวจสอบย้อนกลับผ่านตารางหัวเอกสารได้อยู่แล้ว เพื่อไม่ให้ log รกเกินไป) รวมถึงไม่ผูกกับ <code>document_attachments</code>
+          เพราะมีคอลัมน์ <code>file_content</code> เป็น bytea ก้อนใหญ่ — คัดลอกซ้ำเข้า audit_log จะทำให้ฐานข้อมูลบวมโดยไม่จำเป็น
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. API ============ -->
+    <section id="layer-api">
+      <div class="sec-head"><div class="sec-num">3</div><h2>Node.js API<small>app/server.js — Express + pg เท่านั้น ไม่มี framework อื่นเพิ่ม</small></h2></div>
+      <p class="sec-lede">ชั้นบางๆ ที่แปลง HTTP request เป็นการเรียก <code>SELECT fn_*(...)</code> หรือ <code>SELECT * FROM view/table</code> ตรงๆ — ไม่มี business logic ซ้ำซ้อนกับฝั่งฐานข้อมูล</p>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>รูปแบบ Endpoint<span>63 endpoint ทั้งหมดผ่าน middleware เดียวกัน</span></h4>
+          <span class="badge required">Required</span>
+        </div>
+        <div class="fields">
+          <span class="field">POST /api/auth/login → fn_login</span>
+          <span class="field">GET /api/quotations → v_quotation_open</span>
+          <span class="field">POST /api/quotations → fn_quotation_create</span>
+          <span class="field">POST /api/invoices/:id/post → fn_invoice_post</span>
+          <span class="field">GET /api/dashboard/kpi → v_dashboard_kpi</span>
+          <span class="field new">GET/POST /api/company-profile, GET /api/company-profile/stamp → fn_company_profile_upsert</span>
+          <span class="field new">GET/POST /api/delivery-notes, POST /:id/status → fn_delivery_note_create/set_status</span>
+          <span class="field new">GET/POST /api/billing-notes, GET /available-invoices/:customerId → fn_billing_note_create/set_status</span>
+          <span class="field new">GET/POST /api/tax-rates, GET /api/tax-filings/:id → fn_tax_rate_upsert</span>
+          <span class="field new">GET/POST /api/gl-mappings → fn_gl_mapping_set</span>
+          <span class="field new">GET /api/journal-entries[/:id] → journal_entries + journal_entry_lines (อ่านอย่างเดียว)</span>
+          <span class="field new">GET/POST/DELETE /api/attachments, GET /:id/download → fn_attachment_upload/delete</span>
+        </div>
+        <div class="flow-note">
+          Auth ใช้ Bearer token ธรรมดา (ไม่ใช่ cookie/session ฝั่ง Express) — ทุก request ที่ผ่าน <code>/api/*</code> (ยกเว้น login/health)
+          เรียก <code>fn_session(token)</code> ตรวจสอบทุกครั้ง จึงไม่มี session state ค้างอยู่ฝั่ง Node เลย, restart server ได้โดย client ไม่หลุด
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>Config ผ่าน .env<span>อ่านเองแบบ hand-rolled parser ไม่พึ่ง dependency เพิ่ม</span></h4>
+          <span class="badge optional">Optional</span>
+        </div>
+        <div class="code-block">
+          <div class="code-label">.env.example</div>
+<pre>HTTP_HOST=127.0.0.1
+HTTP_PORT=3001
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=ptsi_accounting
+PGUSER=acct_app
+PGPASSWORD=ChangeMe_App!2026
+PG_POOL_MAX=20
+PGSSL=false</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. UI ============ -->
+    <section id="layer-ui">
+      <div class="sec-head"><div class="sec-num">4</div><h2>Web UI<small>app/public/index.html — ไฟล์เดียว, vanilla JS, ไม่มี build step</small></h2></div>
+      <p class="sec-lede">SPA แบบ tab-based เหมือนแนวทาง Smart ER — string concatenation ธรรมดา ไม่ใช้ framework, เปิดได้ทันทีจากไฟล์ static ที่ Express serve ให้</p>
+
+      <div class="fields">
+        <span class="field">Dashboard — KPI การ์ด + Trial Balance</span>
+        <span class="field">Quotations — สร้าง/ดู/เปลี่ยนสถานะใบเสนอราคา + ไฟล์แนบ</span>
+        <span class="field new">Delivery Notes — ใบส่งของ คัดลอกรายการจากใบเสนอราคาอัตโนมัติ + เปลี่ยนสถานะ + ไฟล์แนบ</span>
+        <span class="field">Invoices — สร้างจากใบเสนอราคาที่ ACCEPTED + Post to GL</span>
+        <span class="field new">Billing Notes — เลือกลูกค้าแล้วติ๊กเลือกใบแจ้งหนี้ที่ยังไม่วางบิลมารวมเรียกเก็บ + ไฟล์แนบ</span>
+        <span class="field">Receipts — รับชำระ (CREDIT_COLLECTION) และขายสด (CASH_SALE)</span>
+        <span class="field new">Purchase Requests — สร้างใบขอซื้อ + เปลี่ยนสถานะ (DRAFT→PENDING→APPROVED/REJECTED→CLOSED)</span>
+        <span class="field new">Purchase Orders — สร้างจากใบขอซื้อที่ APPROVED (คัดลอกรายการอัตโนมัติ) หรือสร้างตรง</span>
+        <span class="field new">Tax Filings — สร้างแบบยื่นภาษีรายเดือน (PP30/PND1/PND3/PND53) + ดูรายการเอกสารประกอบ + ไฟล์แนบ</span>
+        <span class="field new">Journal Entries — เบราว์สมุดรายวันที่เกิดจาก Post to GL อัตโนมัติ พร้อม badge Balanced/Unbalanced</span>
+        <span class="field new">Account Mappings — ผูก control account (AR_CONTROL, VAT_OUTPUT ฯลฯ) กับผังบัญชีจริง (ADMIN)</span>
+        <span class="field">Master Data — Customers/Vendors/Items/Employees/Chart of Accounts/<span class="field new" style="display:inline;padding:0">Tax Rates</span></span>
+        <span class="field new">Company Profile — ข้อมูลบริษัทผู้ออกเอกสาร + อัปโหลดตราประทับ (ADMIN แก้ไข)</span>
+        <span class="field">Settings — ค่าตั้งค่าระบบ (แก้ได้เฉพาะ ADMIN)</span>
+      </div>
+      <div class="flow-note">
+        <b>Purchase Order — ยังไม่มีปุ่มเปลี่ยนสถานะ:</b>&nbsp; ฟังก์ชันฝั่งฐานข้อมูลยังมีแค่ <code>fn_po_create_from_pr</code> (สร้าง PO)
+        ไม่มีฟังก์ชันสำหรับเปลี่ยนสถานะ PO (เช่น SENT → CONFIRMED → RECEIVED) จึงยังไม่ใส่ปุ่มเปลี่ยนสถานะในหน้าจอ — ต่างจาก Purchase Request
+        ที่มี <code>fn_pr_set_status</code> ให้ใช้ครบแล้ว
+      </div>
+      <div class="flow-note">
+        <b>ไฟล์แนบ (Document Attachments) เป็น widget ใช้ร่วมกัน:</b>&nbsp; ฟังก์ชัน JS <code>attachmentsWidgetHtml(refTable, refId)</code>
+        เรียกใช้ในหน้ารายละเอียดของ Quotations, Delivery Notes, Billing Notes และ Tax Filings — อัปโหลดผ่าน <code>FileReader</code> แปลงเป็น
+        base64 แล้วส่งเข้า <code>fn_attachment_upload</code>, ดาวน์โหลดผ่าน endpoint ตรงๆ (<code>/api/attachments/:id/download</code>) ไม่ผ่าน JSON
+      </div>
+    </section>
+
+    <!-- ============ 5. DEPLOY ============ -->
+    <section id="layer-deploy">
+      <div class="sec-head"><div class="sec-num">5</div><h2>Deployment<small>deploy/ — systemd + nginx + backup, รูปแบบเดียวกับ Smart ER</small></h2></div>
+      <p class="sec-lede">ยังไม่ได้ deploy ขึ้นเครื่อง production จริง — ไฟล์เหล่านี้เตรียมไว้ให้พร้อมใช้ทันทีเมื่อมีเซิร์ฟเวอร์เป้าหมาย</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:36px">#</th><th>ไฟล์</th><th>ใช้ทำอะไร</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><code>install_db.sh</code></td><td>รันไฟล์ SQL 00→06 ตามลำดับผ่าน psql พร้อม <code>ON_ERROR_STOP=1</code></td></tr>
+            <tr><td class="num">2</td><td><code>ptsi-accounting.service</code></td><td>systemd unit — รัน <code>node server.js</code> เป็น user จำกัดสิทธิ์ พร้อม hardening (ProtectSystem/ProtectHome/PrivateTmp)</td></tr>
+            <tr><td class="num">3</td><td><code>nginx-ptsi-accounting.conf</code></td><td>reverse proxy HTTPS → 127.0.0.1:3001, redirect HTTP→HTTPS</td></tr>
+            <tr><td class="num">4</td><td><code>backup.sh</code></td><td><code>pg_dump -Fc -Z 6</code> รายวัน (cron), เก็บย้อนหลัง 14 วัน, ตรวจไฟล์ด้วย <code>pg_restore -l</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ RECONCILE ============ -->
+    <section id="reconcile">
+      <div class="sec-head"><div class="sec-num">6</div><h2>จุดที่แก้ไข (Reconciliation)</h2></div>
+      <p class="sec-lede">ฐานข้อมูลกับแอปถูกสร้างคู่ขนานจากสเปกเดียวกันโดยไม่เห็นผลงานสุดท้ายของกันและกัน จึงเกิดจุดที่ไม่ตรงกันหลายจุด — ทั้งหมดถูกตรวจพบและแก้ไขแล้ว พร้อมทดสอบยืนยันด้วยฐานข้อมูลจริง</p>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>ช่องโหว่ที่สำคัญที่สุด: สิทธิ์การเขียนข้อมูลใช้งานจริงไม่ได้เลย<span>fn_* ไม่ได้ตั้งเป็น SECURITY DEFINER</span></h4>
+          <span class="badge critical">Critical</span>
+        </div>
+        <div class="flow-note warn">
+          <b>อาการ:</b>&nbsp; ฟังก์ชันทุกตัวถูกทดสอบผ่านหมดตอนพัฒนา แต่ทดสอบในฐานะ <code>acct_owner</code> (เจ้าของ schema) เท่านั้น — พอเปลี่ยนมาเชื่อมต่อด้วย
+          <code>acct_app</code> (role จริงที่ Node.js API ใช้) กลับเจอ <code>permission denied</code> ในการ login และทุกฟังก์ชันที่เขียนข้อมูล
+          เพราะฟังก์ชัน PL/pgSQL แบบปกติจะรันด้วยสิทธิ์ของ "ผู้เรียก" ไม่ใช่สิทธิ์ของ "เจ้าของฟังก์ชัน" — และ <code>acct_app</code> มีแค่สิทธิ์ SELECT บนตาราง
+          ไม่มีสิทธิ์ INSERT/UPDATE/DELETE เลย
+          <b>ทางแก้:</b>&nbsp; เพิ่ม <code>SECURITY DEFINER SET search_path = acct, public</code> ให้ทุกฟังก์ชันทั้ง 22 ตัว (รันด้วยสิทธิ์ของ acct_owner
+          ที่เป็นเจ้าของฟังก์ชันเสมอ ไม่ว่าใครจะเรียก) และเพิ่ม <code>GRANT USAGE ON SCHEMA public TO acct_app, acct_report</code> ใน
+          <code>00_create_db.sql</code> (ฟังก์ชัน crypt()/gen_random_bytes() ของ pgcrypto อยู่ใน schema public) — ทดสอบยืนยันแล้วว่า
+          login และทุก endpoint ที่เขียนข้อมูลใช้งานได้จริงตอนนี้ ขณะที่การ INSERT ตรงจาก acct_app ยังถูกปฏิเสธเหมือนเดิม (โมเดลความปลอดภัยยังครบ)
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>ชื่อคอลัมน์ไม่ตรงกันระหว่าง schema กับโค้ด Node/UI<span>พบและแก้ 5+ จุดใน server.js, หลายสิบจุดใน index.html</span></h4>
+          <span class="badge required">Required</span>
+        </div>
+        <div class="fields">
+          <span class="field">ORDER BY key → setting_key</span>
+          <span class="field">ORDER BY customer_name → customer_name_th</span>
+          <span class="field">ORDER BY vendor_name → vendor_name_th</span>
+          <span class="field">ORDER BY full_name (employees ไม่มีคอลัมน์นี้) → first_name_th, last_name_th</span>
+          <span class="field">ORDER BY account_group_code → category_code</span>
+        </div>
+        <div class="flow-note">
+          หน้า Master Data ในเว็บ (customers/vendors/items/accounts) เดิมอ้างฟิลด์ที่ไม่มีอยู่จริงในตาราง (เช่น <code>phone</code>/<code>email</code>
+          บน customers/vendors, <code>account_group_code</code>/<code>normal_balance</code> บน chart_of_account_details) — ถูกแก้ให้ตรงกับคอลัมน์จริง
+          และตรงกับคีย์ jsonb ที่แต่ละ <code>fn_*_upsert</code> ต้องการเป๊ะๆ
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="top">
+          <h4>ฟอร์มสร้างเอกสาร ส่งข้อมูลผิดรูปแบบที่ฟังก์ชันต้องการ<span>ใบเสนอราคา / ใบเสร็จรับเงิน</span></h4>
+          <span class="badge required">Required</span>
+        </div>
+        <div class="flow-note">
+          ฟอร์มสร้างใบเสนอราคาเดิมกรอกเป็นข้อความอิสระไม่มี <code>item_id</code> เลย ทั้งที่ <code>quotation_items.item_id</code> อ้างอิงตาราง items
+          แบบ NOT NULL — แก้เป็นตัวเลือกสินค้าจริงจาก <code>/api/items</code> พร้อมราคาเติมอัตโนมัติ &nbsp;•&nbsp; ฟอร์มใบเสร็จเดิมส่ง
+          <code>{invoice_id, amount, method}</code> ตรงๆ แต่ <code>fn_receipt_create</code> ต้องการ <code>sale_type</code> + <code>payment_method</code> +
+          โครงสร้าง <code>applications[]</code> (รับตามใบแจ้งหนี้) หรือ <code>items[]</code> (ขายสด) แยกกัน — สร้างฟอร์มใหม่ให้เลือกประเภทการขายและ
+          กรอกข้อมูลตามโครงสร้างที่ถูกต้อง
+        </div>
+      </div>
+
+      <div class="flow-note">
+        <b>วิธียืนยัน:</b>&nbsp; ทุกจุดข้างต้นถูกทดสอบด้วยการตั้ง PostgreSQL 16 จริง รัน schema ทั้งหมด เปิด Node server จริง แล้วเดินสถานการณ์เต็มรูปแบบ
+        (login → สร้างใบเสนอราคา → ACCEPTED → สร้างใบแจ้งหนี้ → ผ่านรายการ GL → รับชำระทั้งสองแบบ → ผ่านรายการ GL → ตรวจ trial balance สมดุล)
+        ผ่าน HTTP จริงด้วย curl ไม่ใช่แค่ตรวจโค้ดด้วยสายตา
+      </div>
+      <div class="flow-note">
+        <b>รอบเพิ่มเติม (2026-09-26):</b>&nbsp; โมดูล Company Profile, Delivery Notes, Billing Notes, GL Account Mappings, Tax Rates,
+        Journal Entries (browse) และ Document Attachments ถูกทดสอบแบบเดียวกันซ้ำอีกรอบ — สคริปต์ทดสอบ 31 เคสผ่าน HTTP จริงทั้งหมด
+        (login → สร้าง/แก้ไข company profile + อัปโหลดตราประทับ → quotation → ACCEPTED → delivery note (คัดลอกรายการอัตโนมัติ) → เปลี่ยนสถานะ
+        → invoice → billing note (จากใบแจ้งหนี้ที่ยังไม่วางบิล) → เปลี่ยนสถานะ → อัปโหลด/ลบไฟล์แนบ → post invoice เข้า GL → เบราว์ journal entry
+        → สร้าง tax filing) ก่อนแพ็กเกจส่งมอบ
+      </div>
+    </section>
+
+    <!-- ============ GOTCHAS ============ -->
+    <section id="gotchas">
+      <div class="sec-head"><div class="sec-num">7</div><h2>ข้อควรระวัง (สรุปจากที่เจอจริง)</h2></div>
+
+      <ul class="rule-list">
+        <li><span class="marker">!</span><span><b>SECURITY DEFINER:</b> ฟังก์ชันเขียนข้อมูลทุกตัวต้องมี <code>SECURITY DEFINER SET search_path = acct, public</code> มิฉะนั้น role ของแอป (acct_app) จะเรียกใช้ไม่ได้เลยแม้จะมีสิทธิ์ EXECUTE (หัวข้อที่ 6)</span></li>
+        <li><span class="marker">!</span><span><b>schema public:</b> ถ้า REVOKE ALL ON SCHEMA public FROM PUBLIC โดยไม่ regrant USAGE ให้ role ของแอป ฟังก์ชันของ pgcrypto (crypt/gen_random_bytes ที่ fn_login ใช้) จะเรียกไม่ได้ (หัวข้อที่ 6)</span></li>
+        <li><span class="marker">!</span><span><b>psql :variable ใน DO $$ ... $$:</b> ไม่ interpolate ภายใน dollar-quoted body — ต้องสร้างข้อความ DO block ด้วย <code>format(..., %L)</code> ที่ระดับบนสุดก่อน แล้วค่อยรันข้อความนั้น (พบใน 05_smoke_test.sql)</span></li>
+        <li><span class="marker">!</span><span><b>ชื่อคอลัมน์ระหว่าง 2 ทีมงาน:</b> เมื่อฐานข้อมูลกับแอปสร้างคู่ขนานจากสเปกเดียวกัน ต้องไล่เทียบชื่อ column/jsonb key ทุกจุดจริงๆ ก่อนส่งมอบ — เอกสารสเปกอย่างเดียวไม่พอ (หัวข้อที่ 6)</span></li>
+        <li><span class="marker">!</span><span><b>ทดสอบด้วย role จริง:</b> การทดสอบด้วย acct_owner (เจ้าของ schema) ไม่เพียงพอ ต้องทดสอบด้วย role ที่แอปจริงใช้เชื่อมต่อ (acct_app) เพื่อให้เจอปัญหาสิทธิ์ตั้งแต่ตอนพัฒนา ไม่ใช่ตอน production</span></li>
+      </ul>
+    </section>
+
+    <!-- ============ NEXT STEPS ============ -->
+    <section id="next-steps">
+      <div class="sec-head"><div class="sec-num">8</div><h2>ขั้นตอนถัดไป (ถ้าต้องการเพิ่ม)</h2></div>
+      <p class="sec-lede">ยังไม่ได้ทำ — เป็นตัวเลือกเสริมที่ระบุไว้ ยังไม่ได้ตัดสินใจ/implement</p>
+
+      <ul class="checklist">
+        <li>เพิ่มฟังก์ชัน <code>fn_po_set_status</code> ฝั่งฐานข้อมูล แล้วค่อยเพิ่มปุ่มเปลี่ยนสถานะ Purchase Order ในหน้าจอ (ตอนนี้สร้าง PO ได้แต่ยังเปลี่ยนสถานะไม่ได้)</li>
+        <li>เปิด endpoint ให้ดึงประวัติจาก <code>audit_log</code> มาแสดงในหน้าจอ (ตอนนี้อ่านได้เฉพาะผ่าน role acct_report ด้วย SQL ตรงๆ)</li>
+        <li>PND1 (ภาษีหัก ณ ที่จ่ายเงินเดือน) ยังเป็น placeholder เปล่า — ระบบยังไม่มีตารางเงินเดือน/ค่าตอบแทนพนักงานให้สรุปยอด</li>
+        <li>Deploy จริงขึ้นเซิร์ฟเวอร์ตามไฟล์ใน deploy/ (ยังไม่ได้ทดสอบบนเครื่อง production จริง เทสต์ทั้งหมดทำบนเครื่องพัฒนาเท่านั้น)</li>
+        <li>เปลี่ยนรหัสผ่านเริ่มต้นทั้งหมด (roles ในไฟล์ 00_create_db.sql และผู้ใช้ admin ใน 04_seed.sql) ก่อนใช้งานจริง</li>
+      </ul>
+    </section>
+
+    <footer class="page-footer">
+      PTSI-Accounting — PostgreSQL + Node.js Port · อ้างอิงโครงสร้างจากโปรเจกต์ Smart ER (smart-er-postgresql) · จัดทำ 2026-09-26 · ดู <code>accounting_erd/erd.html</code> สำหรับ ERD ฉบับเต็มของระบบต้นฉบับ (Oracle APEX)
+    </footer>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: { primaryColor: '#E7EEFA', primaryBorderColor: '#2A5FB0', lineColor: '#8A93A0', fontFamily: 'Sarabun, sans-serif' },
+    flowchart: { curve: 'basis' }
+  });
+
+  // scrollspy
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var sections = links.map(function(l){ return document.querySelector(l.getAttribute('href')); }).filter(Boolean);
+
+  function setActive(id){
+    links.forEach(function(l){
+      l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) setActive(entry.target.id);
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function(s){ observer.observe(s); });
+  }
+
+  links.forEach(function(l){
+    l.addEventListener('click', function(){ setActive(l.getAttribute('href').slice(1)); });
+  });
+
+  setActive('overview');
+</script>
+</body>
+</html>

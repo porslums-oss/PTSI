@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>PTSI Accounting — ความเสี่ยง</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  .heat{display:grid; grid-template-columns:90px repeat(3,1fr); gap:6px; margin-top:20px; font-size:12.5px}
+  .heat div{border-radius:8px; padding:10px; min-height:70px}
+  .heat .ax{background:transparent; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; text-align:center; min-height:auto}
+  .heat .lo{background:#E4F4F0} .heat .md{background:#FBF0DD} .heat .hi{background:#FBE9E7}
+  .heat b{display:inline-block; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:1px 7px; margin:2px; font-family:'IBM Plex Mono',monospace; font-size:11.5px}
+  td b.id{font-family:'IBM Plex Mono',monospace}
+
+  .diagram-card svg{max-width:100%; height:auto}
+  .diagram-card.wide{overflow:auto}
+  figure.shot{margin:18px 0 0; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  figure.shot img{display:block; width:100%; height:auto}
+  figure.shot figcaption{padding:9px 14px; font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); background:var(--surface-soft)}
+  details.tbl{margin-top:12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  details.tbl > summary{cursor:pointer; padding:12px 16px; font-weight:600; list-style:none; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  details.tbl > summary::-webkit-details-marker{display:none}
+  details.tbl > summary::before{content:"▸"; color:var(--ink-faint); transition:transform .12s}
+  details.tbl[open] > summary::before{transform:rotate(90deg)}
+  details.tbl > summary code{font-size:13.5px; color:var(--accent-dark)}
+  details.tbl > summary small{color:var(--ink-soft); font-weight:400}
+  details.tbl .table-wrap{margin:0; border:none; border-top:1px solid var(--line); border-radius:0; box-shadow:none}
+  .kbd{font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--surface-soft); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px}
+  .pill.warn{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+  .pill.crit{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .pill.info{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .two{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-top:18px}
+  .toc-mini{columns:2; column-gap:30px; margin:16px 0 0; padding-left:20px; color:var(--ink-soft); font-size:13.5px}
+  p.note{color:var(--ink-soft); font-size:13.5px; margin:12px 0 0}
+  h3.sub{font-size:16px; margin:30px 0 0}
+  h3.sub + .table-wrap, h3.sub + .diagram-card, h3.sub + .card-grid, h3.sub + p{margin-top:12px}
+  ol.steps{margin:14px 0 0; padding-left:22px} ol.steps li{margin:7px 0}
+  td code, p code, li code{font-size:12.5px; background:var(--surface-soft); padding:1px 6px; border-radius:5px}
+  .heat.five{grid-template-columns:90px repeat(3,1fr)}
+  td.mono{font-family:'IBM Plex Mono',monospace; font-size:12.5px}
+  .badge.low{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.mid{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+  .badge.high{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  @media print{ .sidebar{display:none} .app{display:block} main{max-width:none; padding:0} details.tbl{break-inside:avoid} section{break-inside:auto} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">AC</div><div class="brand-text"><b>PTSI Accounting</b><span>ประเมินความเสี่ยง</span></div></div>
+    <div class="nav-section-title">ภาพรวม</div><ul class="nav-list"><li><a class="nav-link" href="#overview"><span class="dot"></span>สรุปภาพรวม</a></li><li><a class="nav-link" href="#matrix"><span class="num">M</span>Risk Matrix</a></li></ul><div class="nav-section-title">ประเภทความเสี่ยง</div><ul class="nav-list"><li><a class="nav-link" href="#s"><span class="num">1</span>ความมั่นคงปลอดภัย</a></li><li><a class="nav-link" href="#d"><span class="num">2</span>ข้อมูลและการสำรอง</a></li><li><a class="nav-link" href="#a"><span class="num">3</span>ความพร้อมใช้งานและ Performance</a></li><li><a class="nav-link" href="#p"><span class="num">4</span>การ Deploy และกระบวนการ</a></li><li><a class="nav-link" href="#c"><span class="num">5</span>บัญชี ภาษี และกฎหมาย</a></li><li><a class="nav-link" href="#j"><span class="num">6</span>โครงการและการพึ่งพา</a></li><li><a class="nav-link" href="#rebuild"><span class="num">7</span>สถานการณ์ deploy ใหม่</a></li><li><a class="nav-link" href="#golive"><span class="num">8</span>Go-live Checklist</a></li></ul>
+    <div class="sidebar-footer"><b>จัดทำโดย</b>PTS Innovations Co., Ltd.<br>PTSI Accounting — ประเมินความเสี่ยง<br>อัปเดต 2026-10-06</div>
+  </aside>
+  <main>
+<section id="overview"><h1 style="font-size:26px; margin:0 0 4px">PTSI Accounting — ประเมินความเสี่ยงและช่องโหว่</h1><p style="color:var(--ink-soft); margin:0">ความเสี่ยงของระบบ และของกรณี “ต้องติดตั้ง/ deploy ใหม่” (rebuild) ทั้งบน Vercel + Neon และ On-premise พร้อมแนวทางลดความเสี่ยงและรายการตรวจก่อนใช้งานจริง</p><div class="meta-row"><span class="chip">ความเสี่ยงทั้งหมด: <b>34</b></span><span class="chip">ระดับสูง: <b>14</b></span><span class="chip">กลาง: <b>18</b></span><span class="chip">ต่ำ: <b>2</b></span><span class="chip">วิธีประเมิน: <b>โอกาส × ผลกระทบ (3×3)</b></span><span class="chip">อัปเดต: <b>2026-10-06</b></span></div><div class="callout" style="border-left-color:#B3261E"><div class="ic" style="background:var(--badge-critical-bg);color:var(--badge-critical-fg)">!</div><div class="body"><div class="head"><strong>ข้อสรุปสั้น</strong><span class="pill crit">ต้องจัดการก่อน go-live</span></div>ระบบใช้งานตามฟังก์ชันได้ครบและตรรกะบัญชีบังคับที่ฐานข้อมูลแล้ว แต่ก่อนเปิดใช้งานเชิงธุรกิจจริงควรปิด 3 เรื่องก่อน: <b>(1) เปลี่ยนรหัสผ่าน admin และเพิ่มการป้องกัน brute force (S1,S2)</b> · <b>(2) สำรองข้อมูลภายนอกและซ้อมกู้คืน (D1–D3)</b> · <b>(3) ย้ายจากแพ็กเกจฟรีที่ไม่เหมาะกับงานเชิงพาณิชย์ และรับรองการคำนวณภาษีโดยผู้สอบบัญชี (A1, C3)</b> · ความเสี่ยงสูงด้าน “deploy ใหม่” คือสคริปต์ติดตั้งเก่าไม่ตรงกับชุดปัจจุบัน (P3) และขั้นตอนอัปโหลดด้วยมือ (P1)</div></div></section><section id="matrix"><div class="sec-head"><div class="sec-num">M</div><h2>Risk Matrix<small>โอกาสเกิด × ผลกระทบ (รหัสตามตารางด้านล่าง)</small></h2></div><div class="heat"><div class="ax"></div><div class="ax">ผลกระทบต่ำ</div><div class="ax">ผลกระทบปานกลาง</div><div class="ax">ผลกระทบสูง</div><div class="ax">โอกาสสูง</div><div class="md"><b>A2</b><b>A3</b><b>P4</b></div><div class="hi"><b>A1</b><b>P1</b><b>P2</b></div><div class="hi"><b>S1</b><b>P3</b></div><div class="ax">โอกาสปานกลาง</div><div class="lo"></div><div class="md"><b>S4</b><b>S7</b><b>D5</b><b>A5</b><b>P6</b><b>C4</b><b>C5</b><b>J2</b><b>J3</b><b>J4</b></div><div class="hi"><b>S2</b><b>S6</b><b>D1</b><b>D2</b><b>D3</b><b>P5</b><b>C1</b><b>C3</b><b>J1</b></div><div class="ax">โอกาสต่ำ</div><div class="lo"></div><div class="lo"><b>S5</b><b>D4</b></div><div class="md"><b>S3</b><b>S8</b><b>A4</b><b>C2</b><b>C6</b></div></div></section><section id="s"><div class="sec-head"><div class="sec-num">1</div><h2>ความมั่นคงปลอดภัย<small>Security & Access Control</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead><tbody><tr><td><b class="id">S1</b></td><td>รหัสผ่านเริ่มต้นของ <code>admin</code> (ตั้งโดยสคริปต์ neon_3) เป็นค่าที่รู้กันทั่วไป หากติดตั้งใหม่แล้วไม่เปลี่ยน</td><td>ผู้ไม่หวังดีเข้าระบบด้วยสิทธิ์สูงสุด</td><td><span class="badge high">สูง</span></td><td>เปลี่ยนรหัสผ่านทันทีหลัง deploy ทุกครั้ง · ตรวจในรายการ go-live · ทำสคริปต์/ขั้นตอนบังคับเปลี่ยนรหัสผ่านครั้งแรก</td></tr><tr><td><b class="id">S2</b></td><td>ไม่มีการจำกัดจำนวนครั้ง login ผิด / ล็อกบัญชี / นโยบายความซับซ้อนรหัสผ่าน (บังคับเพียงยาว ≥ 8 ตัวเมื่อสร้างผู้ใช้)</td><td>ถูกเดาสุ่มรหัสผ่าน (brute force)</td><td><span class="badge high">สูง</span></td><td>เพิ่ม rate limit ที่ API/WAF (เช่น Vercel Firewall) · ล็อกชั่วคราวหลังผิดหลายครั้ง · ใช้รหัสผ่านยาวและไม่ซ้ำ</td></tr><tr><td><b class="id">S3</b></td><td>Session token เก็บใน <code>localStorage</code> ของเบราว์เซอร์ — หากมีช่องโหว่ XSS โทเค็นถูกขโมยได้</td><td>ถูกสวมสิทธิ์ผู้ใช้จนกว่า token หมดอายุ (12 ชม.)</td><td><span class="badge mid">กลาง</span></td><td>โค้ดใช้ฟังก์ชัน escape (<code>h()</code>) กับข้อมูลที่แสดง · เพิ่ม Content-Security-Policy · ลดอายุ session · ย้ายไป HttpOnly cookie ในอนาคต</td></tr><tr><td><b class="id">S4</b></td><td>ยังไม่ตั้ง HTTP header ป้องกัน: ไม่มี CSP, HSTS (มีเฉพาะ nosniff, X-Frame-Options, Referrer-Policy)</td><td>เสี่ยง XSS/downgrade มากขึ้นเล็กน้อย</td><td><span class="badge mid">กลาง</span></td><td>เพิ่ม CSP/HSTS ใน <code>server.js</code> หรือ vercel.json (Vercel บังคับ HTTPS อยู่แล้ว) · On-prem: HSTS อยู่ในตัวอย่าง nginx</td></tr><tr><td><b class="id">S5</b></td><td>การเชื่อมต่อ Neon ตั้ง <code>rejectUnauthorized:false</code> (ไม่ตรวจใบรับรองเซิร์ฟเวอร์)</td><td>เข้ารหัสแต่ไม่ยืนยันตัวตนปลายทาง — เสี่ยง MITM ในทางทฤษฎี</td><td><span class="badge low">ต่ำ</span></td><td>ตั้ง ssl เป็น verify-full พร้อม CA ที่เชื่อถือได้เมื่อทดสอบแล้ว</td></tr><tr><td><b class="id">S6</b></td><td>คีย์ลับ (DATABASE_URL, GEMINI/ANTHROPIC API KEY) อยู่ใน Environment Variables · ไฟล์ <code>.env</code> บนเซิร์ฟเวอร์</td><td>รั่วไหลหากอัปโหลด .env ขึ้น GitHub หรือสิทธิ์ไฟล์หลวม</td><td><span class="badge high">สูง</span></td><td>ไม่ commit .env (มี .vercelignore) · repo เป็น private · chmod 600 · เปลี่ยนคีย์ทันทีเมื่อสงสัยรั่ว · จำกัดวงเงิน/สิทธิ์ของคีย์ AI</td></tr><tr><td><b class="id">S7</b></td><td>ฟีเจอร์ AI import ส่งไฟล์เอกสาร (ใบเสนอราคา/ใบกำกับภาษี/นามบัตร) ไปยังผู้ให้บริการภายนอก — แพ็กเกจฟรีของบางผู้ให้บริการอาจนำข้อมูลไปปรับปรุงโมเดล</td><td>ข้อมูลลูกค้า/ผู้ขายออกนอกองค์กร (PDPA)</td><td><span class="badge mid">กลาง</span></td><td>ใช้คีย์แบบชำระเงิน/ตั้งค่าไม่ใช้ข้อมูลฝึกโมเดล · แจ้งผู้ใช้ห้ามอัปโหลดเอกสารลับ · ปิดฟีเจอร์ได้โดยไม่ตั้ง KEY</td></tr><tr><td><b class="id">S8</b></td><td>สิทธิ์ถูกตรวจที่ API (<code>requiredPerm</code>) — endpoint ใหม่ที่ลืมใส่สิทธิ์จะเปิดให้ผู้ล็อกอินทุกบทบาท</td><td>เพิ่มสิทธิ์โดยไม่ตั้งใจ</td><td><span class="badge mid">กลาง</span></td><td>ทดสอบสิทธิ์รายบทบาทก่อนปล่อยเวอร์ชันใหม่ (ทำเป็น test script) · review ทุก route ที่เพิ่ม</td></tr></tbody></table></div></section><section id="d"><div class="sec-head"><div class="sec-num">2</div><h2>ข้อมูลและการสำรอง<small>Data & Backup</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead><tbody><tr><td><b class="id">D1</b></td><td>Neon แพ็กเกจฟรีมีโควตาพื้นที่/ช่วงเวลา restore ย้อนหลังจำกัด ไม่มี SLA — ข้อมูลบัญชีเป็นข้อมูลสำคัญ</td><td>ข้อมูลสูญหาย/กู้ย้อนหลังไม่ได้</td><td><span class="badge high">สูง</span></td><td><code>pg_dump</code> ออกไปเก็บภายนอกสม่ำเสมอ (อย่างน้อยรายวัน) · พิจารณาแพ็กเกจเสียเงิน · ซ้อมกู้คืนทุกไตรมาส</td></tr><tr><td><b class="id">D2</b></td><td>On-premise: สำรองด้วย backup.sh เก็บในเครื่องเดียวกัน ไม่มี off-site / ไม่มีการเตือนเมื่อสำรองล้มเหลว</td><td>ดิสก์เสีย = ข้อมูลและสำรองหายพร้อมกัน</td><td><span class="badge high">สูง</span></td><td>คัดลอกไปเครื่อง/คลาวด์อื่น (3-2-1) · ตั้งเตือนเมื่อ cron ล้มเหลว · เข้ารหัสไฟล์สำรอง</td></tr><tr><td><b class="id">D3</b></td><td>ยังไม่เคยซ้อมกู้คืนจากไฟล์สำรองบนระบบจริงเป็นขั้นตอนมาตรฐาน</td><td>สำรองใช้ไม่ได้เมื่อจำเป็น</td><td><span class="badge high">สูง</span></td><td>ซ้อม restore ลงฐานทดสอบและรัน neon_4 + เทียบยอด Trial Balance ตามกำหนด</td></tr><tr><td><b class="id">D4</b></td><td>ข้อมูลหลักจากระบบเดิม (APEX) ถูกย้ายครั้งเดียวด้วยสคริปต์ — หากต้องย้ายใหม่ ต้องรันตามลำดับ 01→07 อย่างเคร่งครัด</td><td>FK ล้มเหลว/ข้อมูลไม่ครบ</td><td><span class="badge low">ต่ำ</span></td><td>ใช้ลำดับที่ยืนยันแล้วในเอกสาร 05 · เก็บ dump ของฐานที่ผ่านการตรวจแล้วไว้เป็น baseline</td></tr><tr><td><b class="id">D5</b></td><td>ไฟล์แนบเก็บในฐานข้อมูล (จำกัด 4 MB/ไฟล์) — ปริมาณมากทำให้ฐานโตเร็วและเกินโควตา Neon ฟรี</td><td>พื้นที่เต็ม/ช้า</td><td><span class="badge mid">กลาง</span></td><td>จำกัดขนาด/ชนิดไฟล์ · ย้ายไป object storage หากปริมาณเพิ่ม · ตรวจขนาดฐานเป็นระยะ</td></tr></tbody></table></div></section><section id="a"><div class="sec-head"><div class="sec-num">3</div><h2>ความพร้อมใช้งานและ Performance<small>Availability & Performance</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead><tbody><tr><td><b class="id">A1</b></td><td>Vercel Hobby: ฟังก์ชันตัดเวลา 30 วินาที, cold start, และเงื่อนไขห้ามใช้เชิงพาณิชย์</td><td>ใช้เชิงธุรกิจอาจผิดข้อกำหนด/ระบบช้าตอนเริ่ม</td><td><span class="badge high">สูง</span></td><td>อัปเกรดเป็น Pro หรือย้ายไป On-premise ก่อนใช้งานเชิงพาณิชย์จริง · ตรวจข้อกำหนดล่าสุดของผู้ให้บริการ</td></tr><tr><td><b class="id">A2</b></td><td>Neon auto-suspend: คำขอแรกหลังว่างช้า 3–10 วินาที</td><td>ผู้ใช้เข้าใจว่าระบบค้าง</td><td><span class="badge mid">กลาง</span></td><td>แจ้งผู้ใช้ · ปิด auto-suspend ในแพ็กเกจเสียเงิน · (แอปมี cache/prefetch ลดคำขอซ้ำแล้ว)</td></tr><tr><td><b class="id">A3</b></td><td>บริการ AI (Gemini) ตอบ 429/503 ได้บ่อยในช่วงคิวเต็ม</td><td>นำเข้าจากไฟล์ล้มเหลวชั่วคราว</td><td><span class="badge mid">กลาง</span></td><td>ระบบ retry 3 ครั้ง + รุ่นสำรอง (GEMINI_FALLBACK_MODEL) · ผู้ใช้กรอกเองได้ · ใช้คีย์เสียเงิน</td></tr><tr><td><b class="id">A4</b></td><td>จุดล้มเหลวเดี่ยว: Vercel/Neon ล่ม หรือ On-premise เครื่องเดียว ไม่มี HA/replica</td><td>ใช้ระบบไม่ได้ระหว่างเหตุขัดข้อง</td><td><span class="badge mid">กลาง</span></td><td>กำหนด RTO/RPO · On-prem: streaming replica หรืออย่างน้อยกู้ได้ใน N ชั่วโมงจาก dump · ติดตาม uptime</td></tr><tr><td><b class="id">A5</b></td><td>ไม่มีการเฝ้าระวัง (monitoring/alert) ระบบ: ไม่มีแจ้งเตือน error, ช้า, หรือ DB เต็ม</td><td>รู้ปัญหาช้า</td><td><span class="badge mid">กลาง</span></td><td>ใช้ <code>/api/health</code> กับ uptime monitor · ตั้งเตือนใน Vercel/Neon · ตรวจ log เป็นระยะ</td></tr></tbody></table></div></section><section id="p"><div class="sec-head"><div class="sec-num">4</div><h2>การ Deploy และกระบวนการ<small>Deployment & Process</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead><tbody><tr><td><b class="id">P1</b></td><td>การ deploy ด้วยการอัปโหลดไฟล์ผ่านหน้าเว็บ GitHub ด้วยมือ — อัปโหลดไม่ครบชุด (เช่น index.html ใหม่แต่ server.js เก่า) ทำให้หน้าจอกับ API ไม่ตรงกัน</td><td>ฟีเจอร์ใหม่ทำงานผิดพลาด</td><td><span class="badge high">สูง</span></td><td>ทำรายการไฟล์ที่เปลี่ยนทุกรอบ · ใช้ Git CLI/Pull Request · ตั้ง staging/preview ก่อน production</td></tr><tr><td><b class="id">P2</b></td><td>ไม่มี CI และไม่มีชุดทดสอบอัตโนมัติ — ตรวจด้วยการทดสอบมือ/สคริปต์ชั่วคราว</td><td>ข้อผิดพลาดหลุดไป production</td><td><span class="badge high">สูง</span></td><td>เก็บสคริปต์ทดสอบ Playwright/SQL ที่ใช้ตรวจ เข้า repo · เพิ่ม GitHub Actions เบื้องต้น (lint + smoke test)</td></tr><tr><td><b class="id">P3</b></td><td>ไม่มีเครื่องมือ migration ของฐานข้อมูล (ใช้สคริปต์เรียงเลข) และชุด <code>db/install_db.sh</code> เดิมล้าสมัยไม่ตรงกับชุด neon_*</td><td>ติดตั้งใหม่แล้วโครงสร้างไม่ครบ/ผิดเวอร์ชัน</td><td><span class="badge high">สูง</span></td><td>ใช้ชุด neon_1…21 + data_migration ตามเอกสาร 05 · ปรับ/ลบ install_db.sh · เพิ่มตารางบันทึกเวอร์ชันสคริปต์ (schema_version)</td></tr><tr><td><b class="id">P4</b></td><td>ตั้ง/แก้ Environment Variable บน Vercel แล้วลืม Redeploy — ค่าใหม่ไม่มีผล</td><td>AI import/การเชื่อมต่อใช้ค่าเก่า</td><td><span class="badge mid">กลาง</span></td><td>ใส่ในรายการ go-live · Redeploy ทุกครั้งหลังแก้ env</td></tr><tr><td><b class="id">P5</b></td><td>ความรู้ติดตั้งอยู่กับผู้พัฒนา — การ deploy ใหม่ต้องใช้รหัสผ่าน role 3 ตัว, connection string, คีย์ AI ที่ไม่มีบันทึกกลาง</td><td>Deploy ใหม่ล่าช้า/ผิดพลาดเมื่อผู้ดูแลไม่อยู่</td><td><span class="badge high">สูง</span></td><td>เก็บความลับใน password manager ขององค์กร · ใช้เอกสาร 05 เป็น runbook · ซ้อม rebuild จากศูนย์ตามรอบ</td></tr><tr><td><b class="id">P6</b></td><td>Dependency เพียง express/pg แต่ไม่มีการอัปเดต/สแกนช่องโหว่ และ Node/PostgreSQL มีรอบ EOL</td><td>ช่องโหว่ที่รู้จักไม่ถูกปิด</td><td><span class="badge mid">กลาง</span></td><td><code>npm audit</code> ทุกไตรมาส · อัปเดต Node LTS · วางแผนอัปเกรด PostgreSQL ก่อน EOL</td></tr></tbody></table></div></section><section id="c"><div class="sec-head"><div class="sec-num">5</div><h2>บัญชี ภาษี และกฎหมาย<small>Accounting, Tax & Compliance</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead><tbody><tr><td><b class="id">C1</b></td><td>เลขที่เอกสารต่อท้ายด้วยรหัส PK จึงอาจข้ามเลข (เช่น สร้างแล้วยกเลิก) — ใบกำกับภาษี/ใบเสร็จตามกฎหมายต้องเรียงต่อเนื่อง</td><td>ผู้สอบบัญชี/สรรพากรตั้งข้อสังเกต</td><td><span class="badge high">สูง</span></td><td>ยืนยันกับนักบัญชีว่าใช้ช่องเลขใบกำกับที่กรอกเอง หรือเพิ่มตัวรันเลขต่อเนื่องแยกตามประเภท</td></tr><tr><td><b class="id">C2</b></td><td>ปิดงวดแล้วเปิดงวดย้อนหลังแก้ได้ (เฉพาะ ADMIN) — แม้มี Audit Log แต่ตัวเลขรายงานภาษีที่ยื่นไปแล้วอาจเปลี่ยน</td><td>รายงานไม่ตรงกับที่ยื่น</td><td><span class="badge mid">กลาง</span></td><td>จำกัดผู้เป็น ADMIN · เก็บ PDF/CSV รายงานภาษีทุกเดือนที่ยื่น · ขออนุมัติก่อนเปิดงวด</td></tr><tr><td><b class="id">C3</b></td><td>การคำนวณ VAT/หัก ณ ที่จ่าย/แบบ ภ.ง.ด. อยู่ในฟังก์ชันที่ผู้พัฒนาเขียนเอง ยังไม่ผ่านการสอบทานโดยผู้สอบบัญชีอิสระ</td><td>ยื่นภาษีผิด/ค่าปรับ</td><td><span class="badge high">สูง</span></td><td>ให้นักบัญชี/ผู้สอบบัญชีทดสอบ parallel run 1–2 เดือนเทียบระบบเดิม · เทียบยอดรายงานกับแบบ ภ.พ.30</td></tr><tr><td><b class="id">C4</b></td><td>ไม่มีสต็อก/ต้นทุนขาย (COGS) และรายการปรับปรุงสิ้นงวด (ค่าเสื่อม ค้างจ่าย) ในหน้าจอ</td><td>งบการเงินไม่ครบสำหรับธุรกิจสินค้า</td><td><span class="badge mid">กลาง</span></td><td>ยืนยันขอบเขตธุรกิจ (บริการ/สินค้า) · วางแผนเพิ่มโมดูลหรือบันทึกผ่าน Cash Book</td></tr><tr><td><b class="id">C5</b></td><td>ข้อมูลส่วนบุคคลของลูกค้า/ผู้ขาย/พนักงาน (ชื่อ ที่อยู่ เลขผู้เสียภาษี) เก็บในฐานข้อมูล — อยู่ภายใต้ PDPA; ข้อมูลอยู่บน cloud ต่างประเทศ (Neon/Vercel)</td><td>ละเมิด PDPA หากไม่มีมาตรการ/ข้อตกลงที่เหมาะสม</td><td><span class="badge mid">กลาง</span></td><td>กำหนดผู้ควบคุมข้อมูล · นโยบายความเป็นส่วนตัว · เลือก region ที่เหมาะสม · จำกัดสิทธิ์ตามหน้าที่ · อายุการเก็บข้อมูล</td></tr><tr><td><b class="id">C6</b></td><td>การเก็บบันทึกบัญชีต้องเก็บตามกฎหมาย (ปกติ ≥ 5 ปี) — หากฐานข้อมูล/แพ็กเกจถูกยกเลิก ข้อมูลหายไปด้วย</td><td>ขาดหลักฐานทางบัญชี</td><td><span class="badge mid">กลาง</span></td><td>เก็บ dump รายปีแบบถาวรนอกระบบ · ส่งออกรายงานสิ้นปี PDF</td></tr></tbody></table></div></section><section id="j"><div class="sec-head"><div class="sec-num">6</div><h2>โครงการและการพึ่งพา<small>Project & Dependency</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead><tbody><tr><td><b class="id">J1</b></td><td>ผู้พัฒนา/ผู้ดูแลหลักคนเดียว (single maintainer) ตรรกะธุรกิจอยู่ใน PL/pgSQL 87 ฟังก์ชัน</td><td>ขาดผู้ต่อยอดเมื่อมีปัญหา</td><td><span class="badge high">สูง</span></td><td>ใช้เอกสารชุดนี้ (workflow/ERD/DB objects) เป็นฐานความรู้ · ฝึกผู้ดูแลสำรอง · คอมเมนต์ในโค้ด (มี 08_comments.sql)</td></tr><tr><td><b class="id">J2</b></td><td>พึ่งพาผู้ให้บริการภายนอก (Vercel, Neon, GitHub, Google/Anthropic) — เปลี่ยนราคา/เงื่อนไข/ยกเลิกแพ็กเกจฟรี</td><td>ต้องย้ายระบบเร่งด่วน</td><td><span class="badge mid">กลาง</span></td><td>โค้ดเป็น Node + PostgreSQL มาตรฐาน ย้ายไป On-prem ได้ตามเอกสาร 05 · ไม่ใช้ฟีเจอร์เฉพาะของผู้ให้บริการ</td></tr><tr><td><b class="id">J3</b></td><td>การย้ายจาก Oracle APEX อาจมีรายงาน/พฤติกรรมที่ผู้ใช้เคยพึ่งแต่ยังไม่ครบ</td><td>ผู้ใช้ปฏิเสธระบบใหม่</td><td><span class="badge mid">กลาง</span></td><td>ทำรายการเทียบฟังก์ชันเก่า–ใหม่ · UAT กับผู้ใช้จริง · เก็บระบบเดิมไว้ช่วงเปลี่ยนผ่าน</td></tr><tr><td><b class="id">J4</b></td><td>ทดสอบด้วยข้อมูลตัวอย่างเท่านั้น ยังไม่ผ่านการทดสอบโหลด/พร้อมกันหลายผู้ใช้</td><td>ช้า/ล็อกเมื่อใช้จริง</td><td><span class="badge mid">กลาง</span></td><td>ทดสอบโหลดเบื้องต้น (k6/ab) · ปรับ PG_POOL_MAX · ตรวจ index ด้วย EXPLAIN</td></tr></tbody></table></div></section><section id="rebuild"><div class="sec-head"><div class="sec-num">7</div><h2>สถานการณ์ “ต้องทำใหม่ / Deploy ใหม่”<small>Rebuild scenarios</small></h2></div><p class="sec-lede">ประเมินแต่ละกรณีว่าเสียหายอะไร ใช้เวลาเท่าใด และต้องมีอะไรพร้อม</p><div class="table-wrap"><table class=""><thead><tr><th>สถานการณ์</th><th>สิ่งที่ต้องมี</th><th>ความเสี่ยงหลัก</th><th>เวลาโดยประมาณ</th></tr></thead><tbody><tr><td>Vercel project หาย/ย้ายบัญชี</td><td>ซอร์สใน GitHub · env vars (DATABASE_URL, API keys)</td><td>ลืมตั้ง env/Redeploy (P4) · ซอร์สไม่ตรงชุด (P1)</td><td>1–2 ชม.</td></tr><tr><td>Neon database หาย/ย้ายผู้ให้บริการ</td><td>dump ล่าสุด หรือสคริปต์ neon_1…21 + ข้อมูลสำรอง</td><td>ข้อมูลหาย หากไม่มี dump (D1) · ลำดับสคริปต์ผิด (P3) · รหัสผ่าน role ที่เก็บไว้ไม่มี (P5)</td><td>2–4 ชม. (มี dump) / 1 วัน+ (ต้องคีย์ข้อมูลใหม่)</td></tr><tr><td>ย้ายมา On-premise</td><td>เครื่อง + PostgreSQL 16 + Node 20 + dump</td><td>ไม่มี HA/สำรอง off-site (D2,A4) · TLS/ไฟร์วอลล์ตั้งค่าผิด (S4)</td><td>ครึ่งวัน–1 วัน</td></tr><tr><td>เปลี่ยนเวอร์ชัน PostgreSQL/Node</td><td>เครื่องทดสอบ + ชุดทดสอบ</td><td>ฟังก์ชัน PL/pgSQL/pg driver ไม่เข้ากัน (P6) — ไม่มีชุดทดสอบอัตโนมัติ (P2)</td><td>1–3 วัน</td></tr><tr><td>ผู้ดูแลหลักไม่อยู่</td><td>เอกสารชุดนี้ + password manager</td><td>ความรู้กระจุกตัว (J1,P5)</td><td>ขึ้นกับผู้รับช่วง</td></tr></tbody></table></div></section><section id="golive"><div class="sec-head"><div class="sec-num">8</div><h2>Go-live Checklist<small>ตรวจก่อนเปิดใช้งานจริง</small></h2></div><div class="card-grid"><div class="card"><h3>ความปลอดภัย</h3><div class="kv"><span>☐</span><span>เปลี่ยนรหัสผ่าน admin และสร้างผู้ใช้รายบุคคล</span></div><div class="kv"><span>☐</span><span>รหัสผ่าน role 3 ตัวยาว ≥ 16 ตัวและเก็บใน password manager</span></div><div class="kv"><span>☐</span><span>ไม่มี .env/คีย์ใน GitHub · repo เป็น private</span></div><div class="kv"><span>☐</span><span>ตรวจสิทธิ์ทุกบทบาท (VIEWER สร้างเอกสารไม่ได้)</span></div><div class="kv"><span>☐</span><span>เพิ่ม rate limit / CSP ตามที่ตัดสินใจ</span></div></div><div class="card"><h3>ข้อมูล</h3><div class="kv"><span>☐</span><span>รัน neon_4 healthcheck ได้ 55/9/87/28</span></div><div class="kv"><span>☐</span><span>ตั้ง pg_dump อัตโนมัติ + เก็บ off-site</span></div><div class="kv"><span>☐</span><span>ซ้อม restore สำเร็จอย่างน้อย 1 ครั้ง</span></div><div class="kv"><span>☐</span><span>Trial Balance สมดุล · JOURNAL ไม่สมดุล = 0</span></div></div><div class="card"><h3>การใช้งาน</h3><div class="kv"><span>☐</span><span>Parallel run กับระบบเดิม ≥ 1 งวด · นักบัญชีรับรองยอด VAT/WHT</span></div><div class="kv"><span>☐</span><span>อบรมผู้ใช้ตามคู่มือ (เอกสาร 04)</span></div><div class="kv"><span>☐</span><span>ยืนยันเรื่องเลขที่ใบกำกับภาษี (C1)</span></div><div class="kv"><span>☐</span><span>แพ็กเกจ Vercel/Neon เหมาะกับการใช้เชิงพาณิชย์ (A1)</span></div><div class="kv"><span>☐</span><span>ตั้ง monitor ที่ /api/health</span></div></div></div></section>
+    <footer class="page-footer">PTSI Accounting — ประเมินความเสี่ยง · PTS Innovations Co., Ltd. · อัปเดต 2026-10-06</footer>
+  </main>
+</div>
+<script>
+(function(){var L=[].slice.call(document.querySelectorAll('.nav-link'));var S=L.map(function(a){return document.querySelector(a.getAttribute('href'))});
+function on(){var y=window.scrollY+120,i=0;S.forEach(function(s,k){if(s&&s.offsetTop<=y)i=k});L.forEach(function(a,k){a.classList.toggle('active',k===i)})}
+window.addEventListener('scroll',on);on();})();
+</script>
+</body>
+</html>
