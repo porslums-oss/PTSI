@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Smart ER — ตัวอย่าง WebApp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  /* ---------- App-specific ---------- */
+  .nav-link{cursor:pointer}
+  .view{display:none}
+  .view.active{display:block}
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:22px}
+  .topbar h1{font-size:24px; margin:0}
+  .topbar p{margin:2px 0 0; color:var(--ink-soft); font-size:13.5px}
+  .clock{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-soft); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:6px 14px}
+
+  .btn{font-family:inherit; font-size:13.5px; font-weight:600; border:1px solid transparent; border-radius:8px; padding:8px 14px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; transition:filter .12s}
+  .btn:hover{filter:brightness(.95)}
+  .btn.primary{background:var(--accent); color:#fff}
+  .btn.ghost{background:var(--surface); border-color:var(--line); color:var(--ink)}
+  .btn.warn{background:#F59E0B; color:#fff}
+  .btn.ok{background:#16A34A; color:#fff}
+  .btn.danger{background:#DC2626; color:#fff}
+  .btn.sm{padding:5px 10px; font-size:12.5px}
+
+  .kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+  .kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px; display:flex; justify-content:space-between; align-items:center}
+  .kpi small{display:block; color:var(--ink-soft); font-size:12.5px}
+  .kpi b{font-family:'Prompt',sans-serif; font-size:28px; line-height:1.1}
+  .kpi .ico{width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700}
+
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px; margin-top:18px}
+  .panel h3{margin:0 0 12px; font-size:15px; display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .panel h3 small{font-family:'Sarabun'; font-weight:400; color:var(--ink-faint); font-size:12.5px}
+
+  .bed-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:10px}
+  .bed{border:1px solid var(--line); background:var(--surface-soft); border-radius:9px; padding:10px 8px; text-align:center; cursor:pointer; min-height:88px; transition:transform .1s, box-shadow .1s; position:relative}
+  .bed:hover{transform:translateY(-1px); box-shadow:var(--shadow)}
+  .bed .code{font-weight:700; font-size:13.5px}
+  .bed .st{font-size:11.5px; color:var(--ink-faint)}
+  .bed .who{font-size:11.5px; margin-top:4px; line-height:1.35}
+  .bed.used{color:#fff; border-color:transparent}
+  .bed.used .st{color:rgba(255,255,255,.85)}
+  .bed.e5.used{color:var(--ink); border:1.5px solid #9AA3AF}
+  .bed.e5.used .st{color:var(--ink-soft)}
+  .bed.e3.used{color:#3b3000}
+  .bed.e3.used .st{color:#5b4a00}
+  .bed .wait{position:absolute; top:6px; right:6px; font-size:10px; font-weight:700; background:rgba(0,0,0,.18); border-radius:999px; padding:1px 6px}
+  .e1{background:#E53935}.e2{background:#D63AC0}.e3{background:#F5D90A}.e4{background:#2FA24A}.e5{background:#FFFFFF}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; font-size:12.5px; color:var(--ink-soft)}
+  .legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px; border:1px solid rgba(0,0,0,.15)}
+
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .form-grid .full{grid-column:1/-1}
+  label.lb{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:5px}
+  .inp, select.inp{width:100%; font-family:inherit; font-size:14px; padding:9px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink)}
+  .inp:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
+  .inline{display:flex; gap:8px}
+  .esi-pick{display:grid; grid-template-columns:repeat(5,1fr); gap:8px}
+  .esi-pick label{border:2px solid var(--line); border-radius:9px; padding:9px 6px; text-align:center; cursor:pointer; font-size:12.5px; font-weight:600}
+  .esi-pick input{display:none}
+  .esi-pick input:checked + span{outline:3px solid var(--accent); outline-offset:3px; border-radius:6px}
+  .esi-pick .sw{display:block; height:22px; border-radius:6px; margin-bottom:6px; border:1px solid rgba(0,0,0,.12)}
+
+  .success{max-width:460px; margin:0 auto; text-align:center}
+  .band{border:1.5px dashed var(--line); border-radius:12px; padding:18px; margin:16px 0; background:#fff}
+  .band .hosp{font-size:11px; letter-spacing:.12em; color:var(--ink-faint)}
+  .band .nm{font-weight:700; font-size:17px; margin-top:6px}
+  .band .meta{font-size:12.5px; color:var(--ink-soft)}
+
+  .q-cols{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px}
+  .q-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  .q-head{padding:12px 16px; color:#fff; font-weight:700; display:flex; justify-content:space-between; align-items:center}
+  .q-head.wait{background:linear-gradient(90deg,#F59E0B,#F97316)}
+  .q-head.called{background:linear-gradient(90deg,#3B82F6,#6366F1)}
+  .q-head .cnt{background:rgba(255,255,255,.25); padding:2px 10px; border-radius:999px; font-size:12px}
+  .q-body{padding:12px; display:flex; flex-direction:column; gap:10px; min-height:120px}
+  .q-item{background:var(--surface-soft); border:1px solid var(--line); border-radius:9px; padding:10px 12px}
+  .q-item .row{display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .q-item .nm{font-weight:600}
+  .q-item .sub{font-size:12px; color:var(--ink-faint)}
+  .q-item .acts{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px}
+  .empty{color:var(--ink-faint); text-align:center; padding:28px 0; font-size:13px}
+  .dot-esi{width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid rgba(0,0,0,.15); margin-right:6px; vertical-align:-1px}
+
+  .tv-prev{border-radius:var(--radius); overflow:hidden; border:1px solid var(--line)}
+  .tv-prev .hd{display:grid; grid-template-columns:1fr 1fr 1.6fr; background:#1D4ED8; color:#fff; font-weight:700; text-align:center; padding:10px}
+  .tv-prev .r{display:grid; grid-template-columns:1fr 1fr 1.6fr; text-align:center; padding:14px 10px; font-weight:700; font-size:17px; color:#fff}
+  .tv-prev .r.e3{color:#3b3000}.tv-prev .r.e5{color:var(--ink); border-top:1px solid var(--line)}
+
+  .swatches{display:flex; gap:10px; flex-wrap:wrap}
+  .swatch{width:78px; border:2px solid var(--line); border-radius:10px; padding:10px 6px; text-align:center; cursor:pointer; font-size:12px; background:var(--surface)}
+  .swatch i{display:block; width:28px; height:28px; border-radius:50%; margin:0 auto 6px}
+  .swatch.sel{border-color:var(--ink)}
+  .toggle{display:flex; align-items:center; gap:10px; padding:8px 0; font-size:14px}
+  .toggle input{width:18px; height:18px; accent-color:var(--accent)}
+
+  .modal-bg{position:fixed; inset:0; background:rgba(15,20,30,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:16px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--surface); border-radius:14px; width:min(520px,100%); padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal h3{margin:0 0 14px}
+  .modal .acts{display:flex; justify-content:flex-end; gap:8px; margin-top:18px; flex-wrap:wrap}
+
+  .login{position:fixed; inset:0; z-index:60; background:linear-gradient(135deg,var(--sidebar-bg),#1f2a3d); display:flex; align-items:center; justify-content:center; padding:16px}
+  .login.hide{display:none}
+  .login .box{background:var(--surface); border-radius:16px; width:min(380px,100%); overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  .login .top{background:linear-gradient(135deg,var(--accent),var(--accent-dark)); color:#fff; text-align:center; padding:26px 20px 20px}
+  .login .top .brand-mark{margin:0 auto 10px; background:rgba(255,255,255,.2)}
+  .login .bd{padding:20px 22px 24px; display:flex; flex-direction:column; gap:12px}
+  .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:13.5px; opacity:0; transition:opacity .2s; z-index:70; pointer-events:none}
+  .toast.show{opacity:1}
+  .demo-tag{font-size:10.5px; font-weight:700; letter-spacing:.06em; background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg); padding:3px 9px; border-radius:999px}
+
+  @media (max-width:880px){
+    .kpi-row{grid-template-columns:1fr 1fr}
+    .q-cols,.form-grid{grid-template-columns:1fr}
+    .esi-pick{grid-template-columns:repeat(3,1fr)}
+  }
+  @media print{
+    body *{visibility:hidden}
+    #band, #band *{visibility:visible}
+    #band{position:absolute; left:0; top:0; width:100%}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login" id="login">
+  <div class="box">
+    <div class="top">
+      <div class="brand-mark">ER</div>
+      <div style="font-family:Prompt; font-size:20px; font-weight:600">Smart ER</div>
+      <div style="font-size:12.5px; opacity:.85">ระบบบริหารจัดการห้องฉุกเฉิน</div>
+    </div>
+    <div class="bd">
+      <div><label class="lb">ชื่อผู้ใช้</label><input class="inp" id="lgU" value="nurse01"></div>
+      <div><label class="lb">รหัสผ่าน</label>
+        <div class="inline"><input class="inp" id="lgP" type="password" value="demo1234"><button class="btn ghost sm" type="button" onclick="var p=document.getElementById('lgP');p.type=p.type==='password'?'text':'password'">แสดง</button></div></div>
+      <button class="btn primary" style="justify-content:center; padding:11px" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <div style="font-size:11.5px; color:var(--ink-faint); text-align:center">ตัวอย่าง (Prototype) — ไม่มีการตรวจสอบรหัสผ่านจริง</div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">ER</div>
+      <div class="brand-text"><b>Smart ER</b><span>Emergency Room</span></div>
+    </div>
+
+    <div class="nav-section-title">งานหลัก</div>
+    <ul class="nav-list">
+      <li><a class="nav-link active" data-view="beds"><span class="num">1</span>แดชบอร์ด / ผังเตียง</a></li>
+      <li><a class="nav-link" data-view="register"><span class="num">2</span>ลงทะเบียน &amp; คัดกรอง</a></li>
+      <li><a class="nav-link" data-view="queue"><span class="num">3</span>จัดการคิว / เรียกผู้ป่วย</a></li>
+    </ul>
+    <div class="nav-section-title">จอแสดงผล</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-view="board"><span class="dot"></span>ติดตามสถานะ (ญาติ)</a></li>
+      <li><a class="nav-link" href="03_smart-er-tv-dashboard.html" target="_blank"><span class="dot"></span>เปิดจอ TV Dashboard ↗</a></li>
+    </ul>
+    <div class="nav-section-title">ระบบ</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" data-view="settings"><span class="dot"></span>ตั้งค่าระบบ</a></li>
+      <li><a class="nav-link" onclick="logout()"><span class="dot"></span>ออกจากระบบ</a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <b id="whoami">ผู้ใช้: nurse01</b>
+      PTS Innovations Co., Ltd.<br>Smart ER — Prototype v0.1
+    </div>
+  </aside>
+
+  <main>
+    <!-- ============ BEDS ============ -->
+    <div class="view active" id="v-beds">
+      <div class="topbar">
+        <div><h1>ผังเตียงผู้ป่วย</h1><p>คลิกเตียงเพื่อรับผู้ป่วย / เปลี่ยนสถานะ / จำหน่าย</p></div>
+        <div style="display:flex; gap:8px; align-items:center"><span class="demo-tag">ข้อมูลตัวอย่าง</span><span class="clock" id="clk">--:--:--</span></div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div><small>เตียงว่าง</small><b id="kFree" style="color:#16A34A">0</b></div><div class="ico" style="background:#DCFCE7;color:#16A34A">✓</div></div>
+        <div class="kpi"><div><small>เตียงใช้งาน</small><b id="kUsed" style="color:#DC2626">0</b></div><div class="ico" style="background:#FEE2E2;color:#DC2626">!</div></div>
+        <div class="kpi"><div><small>คิวรอเรียก</small><b id="kQ" style="color:#2563EB">0</b></div><div class="ico" style="background:#DBEAFE;color:#2563EB">⏱</div></div>
+        <div class="kpi"><div><small>เกินเวลาเป้าหมาย</small><b id="kOver" style="color:#B45309">0</b></div><div class="ico" style="background:#FEF3C7;color:#B45309">⚠</div></div>
+      </div>
+      <div class="panel">
+        <h3>ระดับความเร่งด่วน <small>สีเตียง = ระดับ ESI · ตัวเลขมุมขวา = นาทีที่อยู่ใน ER</small></h3>
+        <div class="legend">
+          <span><i class="e1"></i>Immediate (ทันที)</span><span><i class="e2"></i>Emergency (≤10 นาที)</span>
+          <span><i class="e3"></i>Urgency (≤30 นาที)</span><span><i class="e4"></i>Semi-urgency (2–4 ชม.)</span>
+          <span><i class="e5"></i>Non-urgency (&gt;4 ชม.)</span><span><i style="background:var(--surface-soft)"></i>ว่าง</span>
+        </div>
+      </div>
+      <div id="zones"></div>
+    </div>
+
+    <!-- ============ REGISTER ============ -->
+    <div class="view" id="v-register">
+      <div class="topbar"><div><h1>ลงทะเบียน &amp; คัดกรอง</h1><p>Patient Registration + Triage (ESI)</p></div></div>
+      <div id="regForm" class="panel">
+        <div class="form-grid">
+          <div class="full">
+            <label class="lb">HN (Hospital Number)</label>
+            <div class="inline"><input class="inp" id="rHN" placeholder="ระบุ HN หรือกดสร้าง HN"><button class="btn primary" onclick="genHN()">+ สร้าง HN</button><button class="btn ghost" onclick="findHN()">ค้นหา</button></div>
+          </div>
+          <div><label class="lb">ชื่อ</label><input class="inp" id="rFN" placeholder="ชื่อ"></div>
+          <div><label class="lb">นามสกุล</label><input class="inp" id="rLN" placeholder="นามสกุล"></div>
+          <div class="full toggle"><input type="checkbox" id="rCrisis" onchange="crisisChanged()"><label for="rCrisis"><b>Crisis / ผู้ป่วยวิกฤต</b> — ออกเลข ER ชั่วคราว (ไม่ทราบชื่อได้) แล้วรวม HN ภายหลัง</label></div>
+          <div class="full">
+            <label class="lb">ระดับความเร่งด่วน (ESI)</label>
+            <div class="esi-pick" id="esiPick"></div>
+          </div>
+          <div><label class="lb">เตียง</label><select class="inp" id="rBed"></select></div>
+          <div><label class="lb">สถานะเริ่มต้น</label><select class="inp" id="rSt"></select></div>
+          <div class="full toggle"><input type="checkbox" id="rQueue" checked><label for="rQueue">เพิ่มเข้าคิว “รอเรียก” ทันที</label></div>
+          <div class="full" style="display:flex; justify-content:flex-end; gap:8px"><button class="btn ghost" onclick="resetReg()">ล้างข้อมูล</button><button class="btn primary" onclick="doRegister()">ลงทะเบียน</button></div>
+        </div>
+      </div>
+      <div id="regOk" class="panel success" style="display:none">
+        <div style="width:54px;height:54px;border-radius:50%;background:#DCFCE7;color:#16A34A;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:26px">✓</div>
+        <h3 style="justify-content:center; margin-top:10px">ลงทะเบียนสำเร็จ!</h3>
+        <div class="band" id="band">
+          <div class="hosp">SMART ER · HOSPITAL</div>
+          <div id="bc" style="margin-top:8px"></div>
+          <div class="nm" id="bName"></div>
+          <div class="meta" id="bMeta"></div>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:center"><button class="btn primary" onclick="window.print()">พิมพ์สายรัดข้อมือ</button><button class="btn ghost" onclick="resetReg()">ลงทะเบียนรายใหม่</button></div>
+      </div>
+    </div>
+
+    <!-- ============ QUEUE ============ -->
+    <div class="view" id="v-queue">
+      <div class="topbar"><div><h1>จัดการคิว</h1><p>Queue Management — เรียงตามระดับ ESI ก่อน แล้วตามเวลามาถึง</p></div></div>
+      <div class="panel">
+        <label class="lb">+ เพิ่มผู้ป่วยเข้าคิว</label>
+        <div class="inline"><input class="inp" id="qHN" placeholder="# ค้นหา HN ผู้ป่วย..." onkeydown="if(event.key==='Enter')addQueue()"><button class="btn primary" onclick="addQueue()">ค้นหา / เพิ่ม</button></div>
+      </div>
+      <div class="q-cols">
+        <div class="q-card"><div class="q-head wait"><span>⏱ รอเรียก</span><span class="cnt" id="cW">0 คิว</span></div><div class="q-body" id="qW"></div></div>
+        <div class="q-card"><div class="q-head called"><span>📢 เรียกแล้ว</span><span class="cnt" id="cC">0 คิว</span></div><div class="q-body" id="qC"></div></div>
+      </div>
+    </div>
+
+    <!-- ============ BOARD ============ -->
+    <div class="view" id="v-board">
+      <div class="topbar"><div><h1>ติดตามสถานะผู้ป่วยและญาติ</h1><p>ตัวอย่างข้อมูลที่ส่งไปจอ TV (ไม่มีชื่อผู้ป่วย · HN ปกปิดตามการตั้งค่า)</p></div>
+        <a class="btn primary" href="03_smart-er-tv-dashboard.html" target="_blank" style="text-decoration:none">เปิดโหมด TV เต็มจอ ↗</a></div>
+      <div class="tv-prev" id="tvPrev"></div>
+    </div>
+
+    <!-- ============ SETTINGS ============ -->
+    <div class="view" id="v-settings">
+      <div class="topbar"><div><h1>ตั้งค่าระบบ</h1><p>System Settings</p></div></div>
+      <div class="panel"><h3>ธีมสี</h3><div class="swatches" id="sw"></div></div>
+      <div class="panel"><h3>เสียงเรียก</h3>
+        <div class="toggle"><input type="radio" name="tts" id="t1" checked><label for="t1">Browser TTS (ออฟไลน์ ข้อมูลไม่ออกนอก รพ.) — <b>แนะนำ</b></label></div>
+        <div class="toggle"><input type="radio" name="tts" id="t2"><label for="t2">Google TTS (ต้องใช้อินเทอร์เน็ต — ตรวจ PDPA ก่อนเปิด)</label></div>
+        <div class="form-grid" style="margin-top:8px">
+          <div><label class="lb">รูปแบบประกาศ</label><input class="inp" id="sTpl" value="ขอเชิญหมายเลข {hn4} ที่เตียง {bed}"></div>
+          <div><label class="lb">ความเร็วเสียง</label><input class="inp" id="sRate" type="number" step="0.1" value="0.9"></div>
+        </div>
+        <div style="margin-top:10px"><button class="btn ghost sm" onclick="speak('ทดสอบเสียงเรียก ขอเชิญหมายเลข ศูนย์ หนึ่ง สอง สาม ที่เตียง เอ็น สอง')">🔊 ทดสอบเสียง</button></div>
+        <span class="flow-note">ไม่ควรเรียก <b>ชื่อ–นามสกุล</b> ผู้ป่วยผ่านลำโพง — ใช้เลข 4 หลักท้ายของ HN หรือเลขคิวแทน</span>
+      </div>
+      <div class="panel"><h3>จอแสดงผล</h3>
+        <div class="toggle"><input type="checkbox" id="sMask" checked onchange="renderAll()"><label for="sMask">ปกปิด HN บนจอสาธารณะ (แสดงเฉพาะ 4 หลักท้าย)</label></div>
+        <div class="form-grid"><div><label class="lb">สลับหน้าจอแสดงผล (วินาที)</label><input class="inp" type="number" value="15"></div><div><label class="lb">จำนวนแถวต่อหน้า</label><input class="inp" type="number" value="8"></div></div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:16px"><button class="btn primary" onclick="toast('บันทึกการตั้งค่าแล้ว')">บันทึกการตั้งค่า</button></div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ BED MODAL ============ -->
+<div class="modal-bg" id="mBg" onclick="if(event.target===this)closeM()">
+  <div class="modal" id="mBox"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================== MASTER DATA ================== */
+var ESI = [
+  {lv:1, th:'แดง',  en:'Immediate',    target:0,   c:'#E53935'},
+  {lv:2, th:'ชมพู', en:'Emergency',    target:10,  c:'#D63AC0'},
+  {lv:3, th:'เหลือง',en:'Urgency',     target:30,  c:'#F5D90A'},
+  {lv:4, th:'เขียว', en:'Semi-urgency', target:240, c:'#2FA24A'},
+  {lv:5, th:'ขาว',  en:'Non-urgency',  target:480, c:'#FFFFFF'}
+];
+var STATUS = ['รอคัดกรอง','รอแพทย์ตรวจ','กำลังตรวจ','รอผลเลือด','รอผลเลือดและ X-ray','รอ X-ray / CT / MRI','สังเกตอาการหลังฉีดยา','รอแพทย์ประเมินซ้ำ','รอ Admit','รอส่งต่อ ICU / CCU','รอส่ง Cath lab','รอจำหน่าย'];
+var ZONES = [
+  {name:'เตียงผู้ป่วยหลัก', beds:['R1','R2','R3','N1','N2','NT1','NT2','NT3','NT4','NT5','NT6','NT7','NT8','NT9','NT10','NT11','T12','T13','T14','T15','T16','T17','T18','T19','20','21','จุดคัดกรอง','VVIP']},
+  {name:'เตียงสังเกตอาการ (29–38)', beds:['29','30','31','32','33','34','35','36','37','38']}
+];
+var now = Date.now(), MIN = 60000;
+var patients = [
+  {hn:'0399743', fn:'สมชาย', ln:'ใจดี',   esi:1, bed:'N2',   st:'รอผลเลือดและ X-ray', at:now-18*MIN},
+  {hn:'0003365', fn:'มาลี',  ln:'ศรีสุข',  esi:2, bed:'NT11', st:'รอผลเลือดและ X-ray', at:now-42*MIN},
+  {hn:'1213280', fn:'ประยูร', ln:'ทองคำ',  esi:3, bed:'NT4',  st:'รอผลเลือด', at:now-55*MIN},
+  {hn:'0158164', fn:'วิไล',  ln:'แสงทอง', esi:3, bed:'T12',  st:'รอผลเลือดและ X-ray', at:now-25*MIN},
+  {hn:'0385361', fn:'อนันต์', ln:'มั่นคง', esi:4, bed:'29',   st:'รอผลเลือดและ X-ray', at:now-95*MIN},
+  {hn:'0000021', fn:'ปราณี', ln:'บุญมา',  esi:1, bed:'R3',   st:'สังเกตอาการหลังฉีดยา', at:now-70*MIN},
+  {hn:'0000023', fn:'สุเมธ', ln:'รุ่งเรือง', esi:4, bed:'32', st:'รอ X-ray / CT / MRI', at:now-130*MIN},
+  {hn:'0521907', fn:'กนก',  ln:'พูลสวัสดิ์', esi:5, bed:'T16', st:'รอแพทย์ตรวจ', at:now-35*MIN}
+];
+var queue = [
+  {hn:'0521907', state:'wait', at:now-30*MIN, recall:0},
+  {hn:'1213280', state:'wait', at:now-50*MIN, recall:0},
+  {hn:'0158164', state:'called', at:now-20*MIN, calledAt:now-3*MIN, recall:1}
+];
+var tempSeq = 1;
+
+/* ================== HELPERS ================== */
+function $(id){return document.getElementById(id)}
+function esiOf(l){return ESI[l-1]}
+function pat(hn){return patients.filter(function(p){return p.hn===hn})[0]}
+function mins(t){return Math.max(0,Math.round((Date.now()-t)/MIN))}
+function maskHN(hn){return $('sMask') && $('sMask').checked ? '•••'+hn.slice(-4) : hn}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show')},2200)}
+function over(p){var e=esiOf(p.esi); return p.st==='รอแพทย์ตรวจ'||p.st==='รอคัดกรอง' ? mins(p.at)>Math.max(e.target,1) : false}
+function hhmm(t){var d=new Date(t);return d.toTimeString().slice(0,8)}
+function speak(txt){
+  try{ if(!('speechSynthesis' in window)){toast('เบราว์เซอร์ไม่รองรับ TTS');return}
+    speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(txt); u.lang='th-TH'; u.rate=parseFloat($('sRate').value)||0.9; speechSynthesis.speak(u);
+  }catch(e){}
+}
+function hnSpeak(hn){return hn.slice(-4).split('').map(function(d){return ['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'][+d]}).join(' ')}
+
+/* ================== NAV ================== */
+document.querySelectorAll('.nav-link[data-view]').forEach(function(a){
+  a.addEventListener('click',function(){ show(a.getAttribute('data-view')) });
+});
+function show(v){
+  document.querySelectorAll('.nav-link[data-view]').forEach(function(a){a.classList.toggle('active',a.getAttribute('data-view')===v)});
+  document.querySelectorAll('.view').forEach(function(x){x.classList.toggle('active',x.id==='v-'+v)});
+  renderAll(); window.scrollTo(0,0);
+}
+function doLogin(){ $('login').classList.add('hide'); $('whoami').textContent='ผู้ใช้: '+($('lgU').value||'user'); toast('เข้าสู่ระบบสำเร็จ') }
+function logout(){ $('login').classList.remove('hide') }
+
+/* ================== BEDS ================== */
+function renderBeds(){
+  var used={}; patients.forEach(function(p){used[p.bed]=p});
+  var total=0, html='';
+  ZONES.forEach(function(z){
+    html+='<div class="panel"><h3>'+z.name+' <small>'+z.beds.length+' เตียง</small></h3><div class="bed-grid">';
+    z.beds.forEach(function(b){
+      total++; var p=used[b];
+      if(p){ html+='<div class="bed used e'+p.esi+'" onclick="bedClick(\''+b+'\')"><span class="wait">'+mins(p.at)+'′</span><div class="code">'+b+'</div><div class="st">'+esiOf(p.esi).en+'</div><div class="who">HN '+p.hn+'<br>'+p.st+'</div></div>'; }
+      else { html+='<div class="bed" onclick="bedClick(\''+b+'\')"><div class="code">เตียง '+b+'</div><div class="st">ว่าง</div><div class="st" style="margin-top:6px">พร้อมใช้งาน</div></div>'; }
+    });
+    html+='</div></div>';
+  });
+  $('zones').innerHTML=html;
+  $('kFree').textContent=total-patients.length; $('kUsed').textContent=patients.length;
+  $('kQ').textContent=queue.filter(function(q){return q.state==='wait'}).length;
+  $('kOver').textContent=patients.filter(over).length;
+}
+function bedClick(b){
+  var p=patients.filter(function(x){return x.bed===b})[0];
+  var h='';
+  if(p){
+    h='<h3>เตียง '+b+' — HN '+p.hn+'</h3>'+
+      '<div class="kv"><span>ชื่อ</span><span>'+p.fn+' '+p.ln+'</span></div>'+
+      '<div class="kv"><span>ระดับ</span><span><span class="dot-esi" style="background:'+esiOf(p.esi).c+'"></span>ESI '+p.esi+' · '+esiOf(p.esi).en+'</span></div>'+
+      '<div class="kv"><span>อยู่ใน ER</span><span>'+mins(p.at)+' นาที</span></div>'+
+      '<div style="margin-top:12px"><label class="lb">เปลี่ยนสถานะ</label><select class="inp" id="mSt">'+STATUS.map(function(s){return '<option'+(s===p.st?' selected':'')+'>'+s+'</option>'}).join('')+'</select></div>'+
+      '<div style="margin-top:10px"><label class="lb">ระดับ ESI (ประเมินซ้ำ)</label><select class="inp" id="mEsi">'+ESI.map(function(e){return '<option value="'+e.lv+'"'+(e.lv===p.esi?' selected':'')+'>ESI '+e.lv+' — '+e.th+' ('+e.en+')</option>'}).join('')+'</select></div>'+
+      '<div style="margin-top:10px"><label class="lb">ย้ายเตียง</label><select class="inp" id="mBed">'+freeBeds(b).map(function(x){return '<option'+(x===b?' selected':'')+'>'+x+'</option>'}).join('')+'</select></div>'+
+      '<div class="acts"><button class="btn danger" onclick="discharge(\''+p.hn+'\')">จำหน่าย / ส่งต่อ</button><button class="btn ghost" onclick="closeM()">ปิด</button><button class="btn primary" onclick="saveBed(\''+p.hn+'\')">บันทึก</button></div>';
+  } else {
+    h='<h3>เตียง '+b+' — ว่าง</h3><p style="color:var(--ink-soft);margin:0 0 10px">รับผู้ป่วยเข้าเตียงนี้ ด้วยการลงทะเบียนใหม่</p>'+
+      '<div class="acts"><button class="btn ghost" onclick="closeM()">ปิด</button><button class="btn primary" onclick="closeM();show(\'register\');$(\'rBed\').value=\''+b+'\'">ลงทะเบียนเข้าเตียงนี้</button></div>';
+  }
+  $('mBox').innerHTML=h; $('mBg').classList.add('show');
+}
+function closeM(){$('mBg').classList.remove('show')}
+function freeBeds(keep){var used={};patients.forEach(function(p){used[p.bed]=1});var all=[];ZONES.forEach(function(z){all=all.concat(z.beds)});return all.filter(function(b){return !used[b]||b===keep})}
+function saveBed(hn){var p=pat(hn);p.st=$('mSt').value;p.esi=+$('mEsi').value;p.bed=$('mBed').value;closeM();renderAll();toast('อัปเดต HN '+hn+' แล้ว')}
+function discharge(hn){patients=patients.filter(function(p){return p.hn!==hn});queue=queue.filter(function(q){return q.hn!==hn});closeM();renderAll();toast('จำหน่าย HN '+hn+' — คืนเตียงเป็นว่าง')}
+
+/* ================== REGISTER ================== */
+function buildReg(){
+  $('esiPick').innerHTML=ESI.map(function(e){return '<label><input type="radio" name="esi" value="'+e.lv+'"'+(e.lv===3?' checked':'')+'><span style="display:block"><i class="sw" style="background:'+e.c+'"></i>ESI '+e.lv+'<br><small style="font-weight:400">'+e.en+'</small></span></label>'}).join('');
+  $('rSt').innerHTML=STATUS.map(function(s){return '<option>'+s+'</option>'}).join('');
+  $('rSt').value='รอแพทย์ตรวจ';
+}
+function fillBedSel(){var v=$('rBed').value;$('rBed').innerHTML=freeBeds().map(function(b){return '<option>'+b+'</option>'}).join('');if(v&&freeBeds().indexOf(v)>=0)$('rBed').value=v}
+function genHN(){ var n; do{n=String(Math.floor(Math.random()*9999999)).padStart(7,'0')}while(pat(n)); $('rHN').value=n; toast('สร้าง HN ใหม่: '+n) }
+function findHN(){ var p=pat($('rHN').value.trim()); if(p){toast('HN นี้อยู่ใน ER แล้ว — เตียง '+p.bed)} else toast('ไม่พบใน ER (ตัวอย่าง: จะค้นจาก HIS จริง)') }
+function crisisChanged(){
+  if($('rCrisis').checked){ $('rHN').value='ER'+String(tempSeq).padStart(5,'0'); if(!$('rFN').value){$('rFN').value='ไม่ทราบชื่อ';$('rLN').value='#'+tempSeq} document.querySelector('input[name=esi][value="1"]').checked=true; var r=freeBeds().filter(function(b){return b[0]==='R'})[0]; if(r)$('rBed').value=r; }
+}
+function doRegister(){
+  var hn=$('rHN').value.trim(), fn=$('rFN').value.trim(), ln=$('rLN').value.trim();
+  if(!hn){toast('กรุณาระบุหรือสร้าง HN');return} if(!fn){toast('กรุณากรอกชื่อ');return}
+  if(pat(hn)){toast('HN '+hn+' อยู่ใน ER แล้ว (ป้องกันลงทะเบียนซ้ำ)');return}
+  var esi=+document.querySelector('input[name=esi]:checked').value;
+  patients.push({hn:hn,fn:fn,ln:ln,esi:esi,bed:$('rBed').value,st:$('rSt').value,at:Date.now()});
+  if($('rCrisis').checked) tempSeq++;
+  if($('rQueue').checked) queue.push({hn:hn,state:'wait',at:Date.now(),recall:0});
+  $('bc').innerHTML=code39(hn); $('bName').textContent=fn+' '+ln; $('bMeta').textContent='HN: '+hn+' · ESI '+esi+' · '+new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+  $('regForm').style.display='none'; $('regOk').style.display='block'; renderAll();
+}
+function resetReg(){ ['rHN','rFN','rLN'].forEach(function(i){$(i).value=''}); $('rCrisis').checked=false; $('regForm').style.display='block'; $('regOk').style.display='none'; buildReg(); fillBedSel() }
+
+/* Code 39 barcode (สแกนได้จริง) */
+function code39(txt){
+  var P={'0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnwwnnnnn','4':'nnnwwnnnw','5':'wnnwwnnnn','6':'nnwwwnnnn','7':'nnnwnnwnw','8':'wnnwnnwnn','9':'nnwwnnwnn','E':'wnnnwwnnn','R':'wnnnnnwwn','*':'nwnnwnwnn'};
+  var s='*'+txt.toUpperCase()+'*', x=10, rects='', n=2, w=5;
+  for(var i=0;i<s.length;i++){ var p=P[s[i]]; if(!p) continue;
+    for(var j=0;j<9;j++){ var wd=p[j]==='w'?w:n; if(j%2===0) rects+='<rect x="'+x+'" y="0" width="'+wd+'" height="56" fill="#111"/>'; x+=wd; } x+=n; }
+  return '<svg viewBox="0 0 '+(x+10)+' 56" style="width:100%;max-width:320px;height:56px">'+rects+'</svg><div style="font-family:IBM Plex Mono;font-weight:600;letter-spacing:.2em">'+txt+'</div>';
+}
+
+/* ================== QUEUE ================== */
+function sortQ(a,b){var pa=pat(a.hn),pb=pat(b.hn);return (pa?pa.esi:9)-(pb?pb.esi:9)||a.at-b.at}
+function renderQueue(){
+  var w=queue.filter(function(q){return q.state==='wait'}).sort(sortQ), c=queue.filter(function(q){return q.state==='called'});
+  $('cW').textContent=w.length+' คิว'; $('cC').textContent=c.length+' คิว';
+  $('qW').innerHTML=w.length?w.map(function(q,i){var p=pat(q.hn)||{};return '<div class="q-item"><div class="row"><div><span class="dot-esi" style="background:'+esiOf(p.esi||5).c+'"></span><span class="nm">'+(i+1)+'. '+(p.fn||'')+' '+(p.ln||'')+'</span><div class="sub">HN: '+q.hn+' · เตียง '+(p.bed||'-')+' · รอ '+mins(q.at)+' นาที</div></div><button class="btn primary sm" onclick="callQ(\''+q.hn+'\')">📢 เรียก</button></div></div>'}).join(''):'<div class="empty">ไม่มีคิวรอเรียก</div>';
+  $('qC').innerHTML=c.length?c.map(function(q){var p=pat(q.hn)||{};return '<div class="q-item"><div class="nm">'+(p.fn||'')+' '+(p.ln||'')+'</div><div class="sub">HN: '+q.hn+' | เรียกเมื่อ: '+hhmm(q.calledAt)+(q.recall?' | เรียกซ้ำ '+q.recall+' ครั้ง':'')+'</div><div class="acts"><button class="btn warn sm" onclick="recallQ(\''+q.hn+'\')">เรียกซ้ำ</button><button class="btn ok sm" onclick="doneQ(\''+q.hn+'\')">✓ เสร็จ</button><button class="btn danger sm" onclick="cancelQ(\''+q.hn+'\')">✕ ยกเลิก</button></div></div>'}).join(''):'<div class="empty">ยังไม่มีคิวที่เรียก</div>';
+}
+function q(hn){return queue.filter(function(x){return x.hn===hn})[0]}
+function announce(hn){var p=pat(hn)||{};speak($('sTpl').value.replace('{hn4}',hnSpeak(hn)).replace('{bed}',p.bed||''))}
+function addQueue(){var hn=$('qHN').value.trim();if(!pat(hn)){toast('ไม่พบ HN '+hn+' ใน ER');return}if(q(hn)){toast('HN นี้อยู่ในคิวแล้ว');return}queue.push({hn:hn,state:'wait',at:Date.now(),recall:0});$('qHN').value='';renderAll();toast('เพิ่ม HN '+hn+' เข้าคิว')}
+function callQ(hn){var x=q(hn);x.state='called';x.calledAt=Date.now();announce(hn);var p=pat(hn);if(p&&p.st==='รอแพทย์ตรวจ')p.st='กำลังตรวจ';renderAll();toast('เรียก HN '+hn)}
+function recallQ(hn){var x=q(hn);x.recall++;x.calledAt=Date.now();announce(hn);renderAll()}
+function doneQ(hn){queue=queue.filter(function(x){return x.hn!==hn});renderAll();toast('เสร็จสิ้น HN '+hn)}
+function cancelQ(hn){
+  $('mBox').innerHTML='<h3>ยกเลิกการเรียก HN '+hn+'</h3><label class="lb">เหตุผล (บังคับ)</label><select class="inp" id="cR"><option>ผู้ป่วยไม่อยู่ / ไม่มาตามเรียก</option><option>เรียกผิดคน</option><option>ผู้ป่วยปฏิเสธการรักษา</option><option>ส่งต่อไปจุดอื่น</option></select><div class="acts"><button class="btn ghost" onclick="closeM()">กลับ</button><button class="btn danger" onclick="queue=queue.filter(function(x){return x.hn!==\''+hn+'\'});closeM();renderAll();toast(\'ยกเลิกแล้ว: \'+$(\'cR\').value)">ยืนยันยกเลิก</button></div>';
+  $('mBg').classList.add('show');
+}
+
+/* ================== BOARD PREVIEW ================== */
+function renderBoard(){
+  var rows=patients.slice().sort(function(a,b){return a.esi-b.esi||a.at-b.at});
+  $('tvPrev').innerHTML='<div class="hd"><div>HN</div><div>เตียง</div><div>สถานะ</div></div>'+rows.map(function(p){return '<div class="r e'+p.esi+'"><div>'+maskHN(p.hn)+'</div><div>'+p.bed+'</div><div>'+p.st+'</div></div>'}).join('');
+}
+
+/* ================== SETTINGS ================== */
+var THEMES=[['Teal','#177A67','#0F5346','#E4F4F0'],['Blue','#2563EB','#1E40AF','#E6EEFE'],['Purple','#7C3AED','#5B21B6','#F0E9FE'],['Indigo','#4F46E5','#3730A3','#ECEBFD'],['Rose','#E11D48','#9F1239','#FDE7EC'],['Amber','#D97706','#92400E','#FDF1DE']];
+function buildSw(){$('sw').innerHTML=THEMES.map(function(t,i){return '<div class="swatch'+(i===0?' sel':'')+'" onclick="setTheme('+i+',this)"><i style="background:'+t[1]+'"></i>'+t[0]+'</div>'}).join('')}
+function setTheme(i,el){var t=THEMES[i],r=document.documentElement.style;r.setProperty('--accent',t[1]);r.setProperty('--accent-dark',t[2]);r.setProperty('--accent-soft',t[3]);document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('sel')});el.classList.add('sel')}
+
+/* ================== INIT ================== */
+function renderAll(){renderBeds();renderQueue();renderBoard();fillBedSel()}
+buildReg(); buildSw(); renderAll();
+setInterval(function(){$('clk').textContent=new Date().toLocaleTimeString('th-TH')},1000);
+setInterval(renderAll,30000);
+</script>
+</body>
+</html>

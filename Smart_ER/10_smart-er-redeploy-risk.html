@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Smart ER — ประเมินความเสี่ยงและช่องโหว่ ก่อนสร้าง / Deploy ใหม่</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  .heat{display:grid; grid-template-columns:90px repeat(3,1fr); gap:6px; margin-top:20px; font-size:12.5px}
+  .heat div{border-radius:8px; padding:10px; min-height:70px}
+  .heat .ax{background:transparent; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; text-align:center; min-height:auto}
+  .heat .lo{background:#E4F4F0} .heat .md{background:#FBF0DD} .heat .hi{background:#FBE9E7}
+  .heat b{display:inline-block; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:1px 7px; margin:2px; font-family:'IBM Plex Mono',monospace; font-size:11.5px}
+  td b.id{font-family:'IBM Plex Mono',monospace}
+
+  main{min-width:0} .step-card{min-width:0} .code-block{max-width:100%}
+
+  main{min-width:0} .step-card{min-width:0}
+  figure.shot{margin:16px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  figure.shot img{display:block;width:100%;height:auto}
+  figure.shot figcaption{padding:9px 14px;font-size:12.5px;color:var(--ink-soft);border-top:1px solid var(--line);background:var(--surface-soft)}
+  ol.steps{margin:12px 0 0;padding-left:22px} ol.steps li{margin:6px 0;color:var(--ink-soft)} ol.steps li b{color:var(--ink)}
+  .os-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:18px}
+  .badge.warn{background:#FBF0DD;color:#8A5A16}.badge.ok{background:#E4F4F0;color:#0F5346}.badge.no{background:#F1F2F5;color:#5B6272}
+  td code,li code,p code,.flow-note code{background:var(--surface-soft);padding:1px 5px;border-radius:4px;font-size:12px}
+  table.tight td,table.tight th{padding:8px 12px}
+  .toc2{columns:2;column-gap:28px;margin:14px 0 0;padding-left:18px;color:var(--ink-soft);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">ER</div><div class="brand-text"><b>Smart ER</b><span>ประเมินความเสี่ยง (Deploy ใหม่)</span></div></div>
+    <div class="nav-section-title">ภาพรวม</div><ul class="nav-list"><li><a class="nav-link" href="#overview"><span class="dot"></span>ข้อสรุป</a></li></ul><div class="nav-section-title">ความเสี่ยง</div><ul class="nav-list"><li><a class="nav-link" href="#sec"><span class="num">1</span>ความมั่นคงปลอดภัย</a></li><li><a class="nav-link" href="#dep"><span class="num">2</span>Deploy & ดำเนินงาน</a></li><li><a class="nav-link" href="#rebuild"><span class="num">3</span>สร้างใหม่ / ย้ายระบบ</a></li></ul><div class="nav-section-title">ก่อนขึ้นระบบ</div><ul class="nav-list"><li><a class="nav-link" href="#check"><span class="num">4</span>Checklist</a></li></ul>
+    <div class="sidebar-footer"><b>จัดทำโดย</b>PTS Innovations Co., Ltd.<br>Smart ER — ประเมินความเสี่ยง (Deploy ใหม่)</div>
+  </aside>
+  <main>
+    <section id="overview">
+      <h1 style="font-size:26px; margin:0 0 4px">Smart ER — ประเมินความเสี่ยงและช่องโหว่ ก่อนสร้าง / Deploy ใหม่</h1>
+      <p style="color:var(--ink-soft); margin:0">ความเสี่ยงที่เกี่ยวกับตัวโค้ด สคริปต์ การ deploy และการย้ายระบบ พร้อมหลักฐานและแนวทางแก้</p>
+      <div class="meta-row"><span class="chip">รายการทั้งหมด: <b>26</b></span><span class="chip">สูง: <b>7</b></span><span class="chip">กลาง: <b>13</b></span><span class="chip">ต่ำ: <b>6</b></span><span class="chip">อัปเดต: <b>2026-10-06</b></span></div>
+      <div class="callout" style="border-left-color:#B3261E"><div class="ic" style="background:var(--badge-critical-bg);color:var(--badge-critical-fg)">!</div><div class="body"><div class="head"><strong>ข้อสรุปสำหรับการ deploy ใหม่</strong><span class="pill" style="background:var(--badge-critical-bg);color:var(--badge-critical-fg)">สำคัญ</span></div>ระบบ <b>พร้อมใช้ทดสอบด้วยข้อมูลจำลอง</b> แต่ยัง <b>ไม่พร้อมใช้กับข้อมูลผู้ป่วยจริง</b> — 5 เรื่องที่ต้องปิดก่อน: (1) ควบคุมสิทธิ์ตามบทบาทไม่ครบ (S1) · (2) ไม่มีการจำกัดการเดารหัสผ่าน (S2) · (3) รหัสผ่านเริ่มต้นและรหัสที่ฝังในไฟล์สคริปต์ต้องหมุน (S3–S5) · (4) งาน partition ต้องมี cron (D5) · (5) ยังไม่เคยทดสอบกับอุปกรณ์จริง (R4)</div></div><span class="flow-note"><b>วิธีประเมิน:</b> ตรวจจากโค้ดและสคริปต์ในชุดส่งมอบ (<code>server.js</code>, <code>config.js</code>, <code>db/*.sql</code>, <code>deploy/</code>) และจากประสบการณ์ deploy จริง · <b>ยังไม่ได้ทำ</b> penetration test, การสแกนช่องโหว่ของโครงสร้างพื้นฐาน Vercel/Neon, หรือการตรวจ source ของ hl7-listener แบบละเอียด — ระดับความเสี่ยงเป็นการประเมินเบื้องต้น ส่วนความเสี่ยงด้านคลินิกและ PDPA ของระบบ ดูเอกสาร 04</span>
+    </section>
+    <section id="sec"><div class="sec-head"><div class="sec-num">1</div><h2>ความมั่นคงปลอดภัยและช่องโหว่<small>จากการตรวจโค้ดและสคริปต์</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง / ช่องโหว่</th><th>หลักฐาน</th><th>ระดับ</th><th>แนวทางแก้</th></tr></thead><tbody><tr><td><b class="id">S1</b></td><td>ควบคุมสิทธิ์ตามบทบาทไม่ครบ — ผู้ที่ล็อกอินได้ทุกบทบาท (รวม VIEWER, REGISTER) เรียก endpoint เขียนข้อมูลได้ เช่น คัดกรอง, จำหน่าย, รวม HN, รับทราบ alarm</td><td><code>server.js</code> ใช้ <code>role()</code> เพียง 9 endpoint (tv-link, hl7 test/device, terminals, settings) · <code>02_functions.sql</code> ไม่มีการตรวจ role</td><td><span class="badge critical">สูง</span></td><td>เพิ่มตารางสิทธิ์ role → function ใน DB (ตรวจใน fn_* แต่ละตัว) หรืออย่างน้อย <code>role()</code> ที่ทุก endpoint เขียน; ทดสอบด้วยบัญชี VIEWER</td></tr><tr><td><b class="id">S2</b></td><td>ไม่มีการจำกัดจำนวนครั้งล็อกอิน/ล็อกบัญชี — เดารหัสผ่านซ้ำได้</td><td><code>fn_login</code> ตรวจรหัสแล้วตอบ LOGIN_FAILED เฉย ๆ ไม่มีตัวนับ; ไม่มี rate-limit ใน Express</td><td><span class="badge critical">สูง</span></td><td>เพิ่มตัวนับล้มเหลว+ล็อกชั่วคราวใน DB, rate limit ที่ nginx (<code>limit_req</code>) / Vercel Firewall, ความยาวรหัสผ่านขั้นต่ำและนโยบายเปลี่ยนรหัส</td></tr><tr><td><b class="id">S3</b></td><td>บัญชี/รหัสผ่านเริ่มต้นที่รู้กันทั่ว (admin/nurse01/reg01) และ <code>.env.example</code> มีรหัสตัวอย่าง</td><td><code>04_seed.sql</code>, <code>.env.example</code></td><td><span class="badge critical">สูง</span></td><td>บังคับเปลี่ยนรหัสตอนติดตั้ง (checklist), ลบ/ปิด seed user ใน production, ห้ามใช้ค่า ChangeMe_*</td></tr><tr><td><b class="id">S4</b></td><td>รหัสผ่านจริงของ role บนฐานทดสอบฝังอยู่ในไฟล์สคริปต์ <code>db/neon_editor/neon_1_roles_schema.sql</code> ซึ่งอยู่ใน <code>smart-er-postgresql.zip</code> และโฟลเดอร์ <code>E:\PTSI</code></td><td>ไฟล์ส่งมอบ</td><td><span class="badge critical">สูง</span></td><td>ถือว่ารหัสชุดนั้นรั่วไหลได้: หมุนรหัสผ่าน 5 role บน Neon ก่อนใช้งานจริง, อย่าแจกไฟล์/zip นี้ต่อ, ครั้งหน้าให้สคริปต์รับรหัสเป็นตัวแปรหรือสุ่มตอนรัน</td></tr><tr><td><b class="id">S5</b></td><td>รหัสผ่านของ <code>neondb_owner</code> เคยแสดงบนหน้าจอระหว่างตั้งค่า</td><td>ระหว่างการ deploy</td><td><span class="badge ongoing">กลาง</span></td><td>Reset รหัสผ่าน neondb_owner ใน Neon Console; ใช้ role แยกสำหรับงานประจำ</td></tr><tr><td><b class="id">S6</b></td><td>TLS ไม่ตรวจใบรับรองฝั่ง DB (<code>rejectUnauthorized:false</code>) — เสี่ยง man-in-the-middle บนเส้นทาง Vercel→Neon</td><td><code>config.js</code> (สาขา DATABASE_URL)</td><td><span class="badge ongoing">กลาง</span></td><td>ใช้ <code>sslmode=verify-full</code> + CA ที่เชื่อถือ (Neon ใช้ CA สาธารณะ) เมื่อใช้งานจริง</td></tr><tr><td><b class="id">S7</b></td><td><code>/api/health</code> เปิดสาธารณะและเปิดเผยเวลา DB + สถานะ HL7</td><td><code>server.js</code> ก่อน <code>app.use('/api', auth)</code></td><td><span class="badge optional">ต่ำ</span></td><td>คืนเฉพาะ <code>{ok:true}</code> ต่อภายนอก; รายละเอียดให้ ADMIN</td></tr><tr><td><b class="id">S8</b></td><td>รหัสเข้าจอ TV (<code>TV_KEY</code>) อยู่ใน URL — ติดอยู่ใน history/log และใช้ร่วมกันทุกจอ; ถ้าไม่ตั้ง <code>/api/tv</code> เปิดโล่ง</td><td><code>server.js /api/tv</code>, <code>tv.html</code></td><td><span class="badge ongoing">กลาง</span></td><td>ตั้ง TV_KEY เสมอ + จำกัด IP ของจอที่ nginx (ตัวอย่างอยู่ใน <code>nginx-smart-er.conf</code>), หมุน key เป็นระยะ; ระยะยาวใช้ device token แบบ Tablet</td></tr><tr><td><b class="id">S9</b></td><td>Session token เก็บเป็นข้อความธรรมดาในตาราง <code>app_session</code> และใน <code>sessionStorage</code> ของเบราว์เซอร์ — ถ้า DB รั่วหรือเกิด XSS นำไปใช้ต่อได้ (หมดอายุ 12 ชม.)</td><td><code>01_schema.sql</code>, <code>index.html</code></td><td><span class="badge ongoing">กลาง</span></td><td>เก็บ hash ของ token (เหมือน device token), ลดอายุ session, เพิ่ม CSP header, คงการ escape ข้อมูลทุกจุด</td></tr><tr><td><b class="id">S10</b></td><td>HL7 listener รับ TCP โดยไม่ยืนยันตัวตน; <code>HL7_ALLOW_IPS</code> ว่าง = รับทุก IP</td><td><code>config.js</code>, <code>hl7-listener.js</code></td><td><span class="badge ongoing">กลาง</span></td><td>ตั้ง allow-list IP และ firewall เฉพาะ subnet ของ monitor, แยก VLAN อุปกรณ์การแพทย์</td></tr><tr><td><b class="id">S11</b></td><td>ไม่มี security header ครบ (CSP) ที่ชั้นแอป — มีเพียง nosniff, X-Frame-Options, Referrer-Policy; HSTS ขึ้นกับ nginx/Vercel</td><td><code>server.js</code></td><td><span class="badge optional">ต่ำ</span></td><td>เพิ่ม CSP และ HSTS ที่ reverse proxy</td></tr><tr><td><b class="id">S12</b></td><td>ไม่ใช้ Row-Level Security — การแยกข้อมูลพึ่ง role/function ทั้งหมด; <code>er_app</code> อ่านตาราง <code>hl7_message</code> (ข้อความ HL7 ดิบ) ได้โดยตรง</td><td><code>03_views_security.sql</code></td><td><span class="badge optional">ต่ำ</span></td><td>ประเมินจำกัด SELECT ตารางดิบเหลือเท่าที่จำเป็น; ตั้ง retention ของ raw message</td></tr></tbody></table></div></section><section id="dep"><div class="sec-head"><div class="sec-num">2</div><h2>การ deploy และการดำเนินงาน</h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง / ช่องโหว่</th><th>หลักฐาน</th><th>ระดับ</th><th>แนวทางแก้</th></tr></thead><tbody><tr><td><b class="id">D1</b></td><td>เปิดระบบทดสอบบนอินเทอร์เน็ตสาธารณะ (โดเมน production ของ Vercel เปิดสาธารณะ) — ใครก็เข้าหน้า login ได้</td><td>โดเมน <code>*.vercel.app</code></td><td><span class="badge ongoing">กลาง</span></td><td>เปิด Vercel Authentication/Password Protection หรือ IP allow-list; ใช้ข้อมูลจำลองเท่านั้น</td></tr><tr><td><b class="id">D2</b></td><td>ข้อมูลจริงบนคลาวด์ต่างประเทศ (Vercel/Neon) — ขัดกับ PDPA/นโยบาย รพ. ถ้าไม่ประเมิน DPIA และข้อตกลงประมวลผล</td><td>ขอบเขตเอกสาร 09</td><td><span class="badge critical">สูง</span></td><td>ห้ามใช้ข้อมูลผู้ป่วยจริงบนระบบทดสอบ; production ติดตั้งภายใน รพ.</td></tr><tr><td><b class="id">D3</b></td><td>HL7 ใช้ไม่ได้บน Vercel (TCP) — ทดสอบแบบ end-to-end ไม่ได้ในสภาพแวดล้อมคลาวด์</td><td><code>server.js</code> (VERCEL guard)</td><td><span class="badge ongoing">กลาง</span></td><td>วาง listener แยกบน VM/คอนเทนเนอร์ที่รับ TCP แล้วต่อ Neon ด้วย <code>er_hl7</code> (direct host)</td></tr><tr><td><b class="id">D4</b></td><td>ข้อจำกัดแพ็กเกจฟรี: cold start, Neon หลับ, โควต้า invocation เมื่อจอ TV/Tablet poll ถี่</td><td>คู่มือ 09</td><td><span class="badge ongoing">กลาง</span></td><td>เพิ่มช่วง poll, ตั้ง region ใกล้ DB (sin1), ใช้แพ็กเกจที่เหมาะสมหรือ server ภายใน</td></tr><tr><td><b class="id">D5</b></td><td>Partition รายเดือนต้องมีงานสร้างล่วงหน้า — ถ้าลืมแล้วข้อความ HL7/สัญญาณชีพเดือนใหม่จะเขียนไม่ได้</td><td><code>fn_create_partitions</code> (ไม่มี cron บน Neon/Vercel)</td><td><span class="badge critical">สูง</span></td><td>ตั้ง cron/Task Scheduler (<code>06_maintenance.sql</code>) หรือ Vercel Cron; เพิ่ม monitoring แจ้งเมื่อ partition ถัดไปไม่มี</td></tr><tr><td><b class="id">D6</b></td><td><code>01_schema.sql</code> รันซ้ำไม่ได้ (CREATE TABLE ตรง ๆ) (เอกสาร 09 รุ่นเดิมระบุว่ารันซ้ำได้ ซึ่งไม่ถูกต้อง — แก้ไขแล้วในรุ่น 2026-10-06)</td><td><code>01_schema.sql</code>, 09</td><td><span class="badge ongoing">กลาง</span></td><td>ทำ migration แบบ versioned (ไฟล์ ALTER) แทนการรัน 01 ซ้ำ</td></tr><tr><td><b class="id">D7</b></td><td>แก้ Environment Variable แล้วลืม Redeploy / รหัสใน URL ไม่ตรง role → ระบบล่มเงียบ ๆ (พบจริงในโปรเจกต์บัญชี)</td><td>ประสบการณ์ deploy</td><td><span class="badge optional">ต่ำ</span></td><td>เพิ่มขั้น “ตรวจ /api/health หลัง deploy” ในทุกครั้ง</td></tr><tr><td><b class="id">D8</b></td><td>ไม่มีแผน backup/restore ที่ทดสอบจริงบน Neon (พึ่ง retention ตามแพ็กเกจ) และ <code>backup.sh</code> ทดสอบเฉพาะบนเครื่อง Linux</td><td>คู่มือ 07 หมวด Backup</td><td><span class="badge ongoing">กลาง</span></td><td>ตรวจนโยบาย PITR ของแพ็กเกจที่ใช้, ทดสอบ restore ลงฐานแยกทุกไตรมาส</td></tr><tr><td><b class="id">D9</b></td><td>Dependency และ runtime: ตอนนี้ <code>npm audit</code> ไม่พบช่องโหว่ (2 package) แต่ Node 22 มีวัฏจักร LTS ที่หมดอายุในอนาคต</td><td><code>package.json</code></td><td><span class="badge optional">ต่ำ</span></td><td>ตรวจ <code>npm audit</code> ทุกครั้งก่อน deploy; วางแผนอัปเกรด Node ตาม roadmap ทางการ</td></tr></tbody></table></div></section><section id="rebuild"><div class="sec-head"><div class="sec-num">3</div><h2>การสร้างระบบใหม่ / ย้ายระบบ</h2></div><div class="table-wrap"><table class=""><thead><tr><th>รหัส</th><th>ความเสี่ยง / ช่องโหว่</th><th>หลักฐาน</th><th>ระดับ</th><th>แนวทางแก้</th></tr></thead><tbody><tr><td><b class="id">R1</b></td><td>ต้องสร้างระบบใหม่จากศูนย์ แต่ไม่มีเอกสาร/ไฟล์ครบ</td><td>เอกสารชุด 00–11 + ไฟล์ <code>smart-er-postgresql.zip</code></td><td><span class="badge optional">ต่ำ</span></td><td>เก็บ repo (db/, app/, deploy/, docs/) ใน Git ส่วนตัว พร้อมเอกสารชุดนี้</td></tr><tr><td><b class="id">R2</b></td><td>ข้อมูลเดิมย้ายไม่ได้ / ไม่ตรงโครงสร้างใหม่</td><td>—</td><td><span class="badge ongoing">กลาง</span></td><td>ส่งออกด้วย <code>pg_dump</code> + ทดสอบ restore บน staging ก่อนสลับระบบ; เก็บ dump ก่อน migration เสมอ</td></tr><tr><td><b class="id">R3</b></td><td>Deploy ใหม่แล้ว role/สิทธิ์ผิด (เช่น function owner ไม่ใช่ <code>er_owner</code> บน Neon)</td><td>บทเรียนใน 08</td><td><span class="badge ongoing">กลาง</span></td><td>ใช้ชุดสคริปต์ neon_editor ที่ทดสอบแล้ว; ตรวจ <code>pg_proc.proowner</code> และ GRANT หลังติดตั้ง</td></tr><tr><td><b class="id">R4</b></td><td>อุปกรณ์จริง (monitor, สแกนเนอร์, ปริ้นเตอร์, Tablet) ยังไม่เคยทดสอบ — เจอปัญหาตอน go-live</td><td>คู่มือ 05 หัวข้อ 8, “ต้องยืนยันกับผู้ขาย”</td><td><span class="badge critical">สูง</span></td><td>ทดสอบกับอุปกรณ์จริงตามรายการ 15 ข้อ ใน staging ของ รพ. ก่อนใช้งาน</td></tr><tr><td><b class="id">R5</b></td><td>ความรู้อยู่กับคนเดียว (bus factor)</td><td>—</td><td><span class="badge ongoing">กลาง</span></td><td>ฝึกผู้ดูแลอย่างน้อย 2 คน ใช้คู่มือ 06 และ 07 เป็นหลักสูตร</td></tr></tbody></table></div></section><section id="check"><div class="sec-head"><div class="sec-num">4</div><h2>Checklist ก่อน Deploy ใหม่</h2></div><ul class="checklist"><li>หมุนรหัสผ่านทุก role บน Neon และ <code>neondb_owner</code> (S4, S5)</li><li>เปลี่ยนรหัสผ่านทุกบัญชีผู้ใช้เริ่มต้น หรือปิดใช้ (S3)</li><li>ตั้ง <code>TV_KEY</code> เป็นค่าสุ่ม และจำกัด IP ของจอ (S8)</li><li>ปิดช่องว่างสิทธิ์ตามบทบาท และทดสอบด้วยบัญชี VIEWER/REGISTER (S1)</li><li>เพิ่ม rate-limit / ล็อกบัญชีที่ล็อกอิน (S2)</li><li>ตั้งงาน partition และ monitoring (D5)</li><li>เปิด Vercel Authentication หรือ allow-list สำหรับระบบทดสอบ (D1)</li><li>ยืนยันว่าไม่มีข้อมูลผู้ป่วยจริงบนคลาวด์ (D2)</li><li>ตั้ง <code>sslmode=verify-full</code> สำหรับ production (S6)</li><li>ทดสอบ restore จาก backup ลงฐานแยก (D8)</li><li>รัน <code>npm audit</code> และ smoke test ก่อน deploy (D9)</li></ul></section>
+    <footer class="page-footer">เอกสารชุด Smart ER · 10 ประเมินความเสี่ยงและช่องโหว่ (Deploy ใหม่) · เป็นการประเมินเบื้องต้น ไม่ใช่ผล penetration test</footer>
+  </main>
+</div>
+
+<script>
+  var links=Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var secs=links.map(function(l){return document.querySelector(l.getAttribute('href'))}).filter(Boolean);
+  function setActive(id){links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+id)})}
+  if('IntersectionObserver' in window){var ob=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)setActive(e.target.id)})},{rootMargin:'-15% 0px -70% 0px',threshold:0});secs.forEach(function(s){ob.observe(s)})}
+  setActive('overview');
+</script>
+</body>
+</html>

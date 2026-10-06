@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Smart ER — คู่มือ Install · Setup · Deploy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  .heat{display:grid; grid-template-columns:90px repeat(3,1fr); gap:6px; margin-top:20px; font-size:12.5px}
+  .heat div{border-radius:8px; padding:10px; min-height:70px}
+  .heat .ax{background:transparent; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; text-align:center; min-height:auto}
+  .heat .lo{background:#E4F4F0} .heat .md{background:#FBF0DD} .heat .hi{background:#FBE9E7}
+  .heat b{display:inline-block; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:1px 7px; margin:2px; font-family:'IBM Plex Mono',monospace; font-size:11.5px}
+  td b.id{font-family:'IBM Plex Mono',monospace}
+
+  main{min-width:0} .step-card{min-width:0} .code-block{max-width:100%}
+
+  main{min-width:0} .step-card{min-width:0}
+  figure.shot{margin:16px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  figure.shot img{display:block;width:100%;height:auto}
+  figure.shot figcaption{padding:9px 14px;font-size:12.5px;color:var(--ink-soft);border-top:1px solid var(--line);background:var(--surface-soft)}
+  ol.steps{margin:12px 0 0;padding-left:22px} ol.steps li{margin:6px 0;color:var(--ink-soft)} ol.steps li b{color:var(--ink)}
+  .os-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:18px}
+  .badge.warn{background:#FBF0DD;color:#8A5A16}.badge.ok{background:#E4F4F0;color:#0F5346}.badge.no{background:#F1F2F5;color:#5B6272}
+  td code,li code,p code,.flow-note code{background:var(--surface-soft);padding:1px 5px;border-radius:4px;font-size:12px}
+  table.tight td,table.tight th{padding:8px 12px}
+  .toc2{columns:2;column-gap:28px;margin:14px 0 0;padding-left:18px;color:var(--ink-soft);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">ER</div><div class="brand-text"><b>Smart ER</b><span>คู่มือติดตั้ง</span></div></div>
+    <div class="nav-section-title">เตรียมการ</div><ul class="nav-list"><li><a class="nav-link" href="#overview"><span class="dot"></span>ภาพรวม</a></li><li><a class="nav-link" href="#sw"><span class="num">1</span>Software & Hardware</a></li><li><a class="nav-link" href="#plan"><span class="num">2</span>ลำดับการติดตั้ง</a></li></ul><div class="nav-section-title">ติดตั้ง</div><ul class="nav-list"><li><a class="nav-link" href="#os"><span class="num">3</span>คำสั่งตาม OS</a></li><li><a class="nav-link" href="#cloud"><span class="num">4</span>Vercel + Neon</a></li></ul><div class="nav-section-title">หลังติดตั้ง</div><ul class="nav-list"><li><a class="nav-link" href="#post"><span class="num">5</span>ตรวจสอบหลังติดตั้ง</a></li><li><a class="nav-link" href="#upg"><span class="num">6</span>อัปเกรด & Rollback</a></li><li><a class="nav-link" href="#ops"><span class="num">7</span>Backup & บำรุงรักษา</a></li></ul>
+    <div class="sidebar-footer"><b>จัดทำโดย</b>PTS Innovations Co., Ltd.<br>Smart ER — คู่มือติดตั้ง</div>
+  </aside>
+  <main>
+    <section id="overview">
+      <h1 style="font-size:26px; margin:0 0 4px">Smart ER — คู่มือ Install · Setup · Deploy</h1>
+      <p style="color:var(--ink-soft); margin:0">ติดตั้งระบบใหม่บนเซิร์ฟเวอร์แต่ละ OS หรือขึ้นระบบทดสอบบนคลาวด์ พร้อมรายการ software ทั้งหมด</p>
+      <div class="meta-row"><span class="chip">ผู้อ่าน: <b>IT / DBA</b></span><span class="chip">OS: <b>Ubuntu · RHEL/Oracle Linux · Windows · Cloud</b></span><span class="chip">DB: <b>PostgreSQL 16</b> · Node: <b>22 LTS</b></span><span class="chip">อัปเดต: <b>2026-10-06</b></span></div>
+      <div class="callout" style="border-left-color:#177A67"><div class="ic">i</div><div class="body"><div class="head"><strong>เอกสารนี้ใช้เมื่อไร</strong><span class="pill done">Install / Setup / Deploy</span></div>
+ใช้ติดตั้ง Smart ER ใหม่บนเซิร์ฟเวอร์ของ รพ. (แต่ละ OS) หรือขึ้นระบบทดสอบบนคลาวด์ (Vercel + Neon) · รวมรายการ software ทั้งหมด, ขั้นตอน, การตรวจสอบหลังติดตั้ง, การอัปเกรด และ rollback<br><br>
+<b>ความสัมพันธ์กับคู่มือเดิม:</b> คู่มือ 05 อธิบายการติดตั้งบน Ubuntu/Rocky/Windows แบบละเอียดพร้อมภาพ และคู่มือ 09 อธิบาย Vercel — เอกสารนี้ <b>รวมศูนย์</b> และเพิ่มข้อมูลที่ได้จากการ deploy จริงครั้งนี้ (ขั้นตอนผ่าน Neon SQL Editor, ข้อควรระวัง, ปัญหาที่เจอ)</div></div>
+<span class="flow-note warn"><b>สถานะการทดสอบ:</b> เส้นทางที่ทดสอบจริงในโครงการ = (1) PostgreSQL 16 บน Linux + Node.js 22 รันในสภาพแวดล้อมทดสอบ และ (2) Vercel + Neon (ระบบรันอยู่ ใช้ข้อมูลจำลอง) · คำสั่งสำหรับ RHEL/Oracle Linux, Windows Server, macOS เป็นขั้นตอนมาตรฐานของ software แต่ละตัว <b>ยังไม่เคยรันบนเครื่องจริงในโครงการนี้</b> ต้องทดสอบบนเครื่อง staging ก่อนเสมอ ป้ายสถานะระบุไว้ในแต่ละหัวข้อ</span>
+    </section>
+    <section id="sw"><div class="sec-head"><div class="sec-num">1</div><h2>Software และ Hardware ที่ต้องใช้<small>รายการครบทุกอย่าง</small></h2></div><div class="table-wrap"><table class=""><thead><tr><th>Software</th><th>เวอร์ชัน</th><th>หน้าที่</th><th>จำเป็น?</th></tr></thead><tbody><tr><td>PostgreSQL</td><td>16 หรือ 17</td><td>ฐานข้อมูล + business logic (plpgsql) · extension <code>pgcrypto</code>, <code>pg_trgm</code> (อยู่ใน contrib)</td><td>ต้องมี</td></tr><tr><td>Node.js</td><td>22 LTS (≥ 20)</td><td>API + HL7 listener (<code>engines: node >=20</code>)</td><td>ต้องมี</td></tr><tr><td>npm packages</td><td>express ^4.21, pg ^8.13</td><td>มีเพียง 2 dependency (<code>npm ci --omit=dev</code>; ผล <code>npm audit</code> วันที่ 2026-10-06: 0 ช่องโหว่)</td><td>ต้องมี</td></tr><tr><td>nginx (หรือ IIS/Apache reverse proxy)</td><td>ล่าสุดของ OS</td><td>HTTPS (443) หน้าบ้าน ส่งต่อไป Node:3000</td><td>แนะนำมาก</td></tr><tr><td>chrony / NTP</td><td>—</td><td>เวลาต้องตรงกับเครื่อง monitor (HL7 timestamp)</td><td>ต้องมี</td></tr><tr><td>systemd / NSSM</td><td>—</td><td>ให้ Node เริ่มเองและ restart เมื่อล้ม (Linux / Windows)</td><td>ต้องมี</td></tr><tr><td>psql client</td><td>ตรงกับ server</td><td>รันสคริปต์ติดตั้งและ migration</td><td>ต้องมี (บนเครื่องผู้ติดตั้ง)</td></tr><tr><td>Chrome / Edge</td><td>ล่าสุด</td><td>ฝั่งผู้ใช้ทุกคน, Mini PC ของจอ TV (kiosk)</td><td>ต้องมี</td></tr><tr><td>Kiosk browser บน Tablet</td><td>—</td><td>Fully Kiosk (Android) / Guided Access (iPad)</td><td>แนะนำ</td></tr><tr><td>Git, Vercel account, Neon account</td><td>—</td><td>เฉพาะเส้นทางคลาวด์ (ทดสอบ)</td><td>ตามเส้นทาง</td></tr><tr><td>pgBackRest</td><td>—</td><td>PITR backup เมื่อใช้งานจริง</td><td>แนะนำเมื่อ go-live</td></tr></tbody></table></div><div class="table-wrap"><table class=""><thead><tr><th>รายการ</th><th>ข้อกำหนดแนะนำ (1 เครื่อง / VM)</th></tr></thead><tbody><tr><td>CPU / RAM / Disk</td><td>4 vCPU / 8–16 GB / SSD 200 GB + พื้นที่ backup แยก</td></tr><tr><td>Network</td><td>IP คงที่ VLAN เดียวกับเครื่อง monitor</td></tr><tr><td>Client</td><td>เครื่องสแกน USB HID (Code 39/128), ปริ้นเตอร์ thermal wristband, จอ TV + Mini PC, Tablet 10″ + Wi-Fi</td></tr></tbody></table></div><div class="table-wrap"><table class="tight"><thead><tr><th>Port</th><th>จาก</th><th>ไป</th><th>ใช้ทำ</th></tr></thead><tbody><tr><td>443/TCP</td><td>PC, TV, Tablet</td><td>nginx</td><td>Web UI + API</td></tr><tr><td>6000/TCP (HL7/MLLP)</td><td>เครื่อง monitor เท่านั้น</td><td>Node HL7 listener</td><td>ไม่ผ่าน nginx — จำกัด IP ที่ firewall</td></tr><tr><td>3000/TCP</td><td>localhost</td><td>Node API</td><td>ไม่เปิดออกนอกเครื่อง</td></tr><tr><td>5432/TCP</td><td>localhost (หรือ app server)</td><td>PostgreSQL</td><td>ไม่เปิดให้ LAN ทั่วไป</td></tr><tr><td>22/TCP</td><td>ผู้ดูแลระบบ</td><td>SSH</td><td>—</td></tr></tbody></table></div></section><section id="plan"><div class="sec-head"><div class="sec-num">2</div><h2>ลำดับการติดตั้ง (ทุก OS)<small>8 ขั้น เหมือนกันทุกแพลตฟอร์ม</small></h2></div><ol class="steps"><li><b>เตรียมเครื่อง</b> — OS, เวลา, firewall, user สำหรับรันแอป (ไม่ใช้ root)</li><li><b>ติดตั้ง PostgreSQL</b> + ปรับ <code>postgresql.conf</code> / <code>pg_hba.conf</code></li><li><b>สร้างฐานข้อมูล</b> — แก้รหัสผ่าน 5 role ใน <code>00_create_db.sql</code> แล้วรัน 00 → 01 → 02 → 03 → 04 → 07 → 08 และ <code>05_smoke_test.sql</code> (ต้องจบด้วย SMOKE TEST PASSED)</li><li><b>ติดตั้ง Node.js + แอป</b> — <code>npm ci --omit=dev</code>, สร้าง <code>.env</code> (chmod 600)</li><li><b>ตั้ง service + nginx (HTTPS)</b></li><li><b>เปลี่ยนรหัสผ่านผู้ใช้เริ่มต้น</b>, ตั้งชื่อ รพ., <code>hn_source</code>, <code>TV_KEY</code></li><li><b>เชื่อมอุปกรณ์</b> — สแกนเนอร์/ปริ้นเตอร์, monitor, Tablet, จอ TV</li><li><b>ทดสอบก่อนใช้งาน</b> + ตั้ง backup</li></ol></section><section id="os"><div class="sec-head"><div class="sec-num">3</div><h2>คำสั่งตาม OS</h2></div><div class="step-card"><div class="top"><h4>Ubuntu 24.04 LTS / Debian<span>เส้นทางหลักที่คู่มือ 05 อธิบายละเอียด <span class="badge ok">ทดสอบแล้ว</span></span></h4></div><div class="code-block"><div class="code-label">bash — เตรียม OS</div><pre>sudo apt update &amp;&amp; sudo apt -y upgrade
+sudo timedatectl set-timezone Asia/Bangkok
+sudo apt -y install chrony curl gnupg ca-certificates unzip nginx
+sudo systemctl enable --now chrony
+sudo useradd -r -m -d /opt/smart-er -s /bin/bash smarter
+sudo ufw allow 22/tcp &amp;&amp; sudo ufw allow 443/tcp
+sudo ufw allow from 192.168.10.0/24 to any port 6000 proto tcp   # subnet ของ monitor
+sudo ufw enable</pre></div><div class="code-block"><div class="code-label">bash — PostgreSQL 16 (PGDG) และ Node.js 22</div><pre>sudo install -d /usr/share/postgresql-common/pgdg
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+echo &quot;deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main&quot; | sudo tee /etc/apt/sources.list.d/pgdg.list
+sudo apt update &amp;&amp; sudo apt -y install postgresql-16 postgresql-contrib-16
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - &amp;&amp; sudo apt -y install nodejs</pre></div><div class="code-block"><div class="code-label">bash — ฐานข้อมูล แอป และ service</div><pre>sudo mkdir -p /opt/smart-er &amp;&amp; sudo cp -r smart-er-postgresql/* /opt/smart-er/ &amp;&amp; sudo chown -R smarter:smarter /opt/smart-er
+cd /opt/smart-er/db
+sudo -u postgres psql -v ON_ERROR_STOP=1 -f 00_create_db.sql          # แก้รหัสผ่านในไฟล์ก่อน
+SKIP_00=1 OWNER_PWD=&#x27;&lt;รหัส er_owner&gt;&#x27; PGHOST=localhost ./install_db.sh   # 01-04, 07, 08 + ตรวจสอบ
+sudo -u smarter -i  # แล้ว: cd /opt/smart-er/app &amp;&amp; npm ci --omit=dev &amp;&amp; cp .env.example .env &amp;&amp; chmod 600 .env
+sudo cp /opt/smart-er/deploy/smart-er.service /etc/systemd/system/
+sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now smart-er
+sudo cp /opt/smart-er/deploy/nginx-smart-er.conf /etc/nginx/conf.d/smart-er.conf &amp;&amp; sudo nginx -t &amp;&amp; sudo systemctl reload nginx</pre></div></div><div class="step-card"><div class="top"><h4>RHEL 9 / Rocky 9 / Oracle Linux 9<span>ใช้ dnf แทน apt <span class="badge warn">ยังไม่ได้ทดสอบในโครงการนี้</span></span></h4></div><div class="code-block"><div class="code-label">bash — เตรียม OS และ PostgreSQL 16 (PGDG)</div><pre>sudo dnf -y install chrony curl unzip nginx firewalld
+sudo timedatectl set-timezone Asia/Bangkok &amp;&amp; sudo systemctl enable --now chronyd firewalld
+sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo dnf -qy module disable postgresql
+sudo dnf -y install postgresql16-server postgresql16-contrib
+sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
+sudo systemctl enable --now postgresql-16
+# Node.js 22
+sudo dnf -y module enable nodejs:22 &amp;&amp; sudo dnf -y install nodejs   # หรือใช้ repo ของ NodeSource</pre></div><div class="code-block"><div class="code-label">bash — firewall และ SELinux</div><pre>sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --permanent --add-rich-rule=&#x27;rule family=ipv4 source address=192.168.10.0/24 port port=6000 protocol=tcp accept&#x27;
+sudo firewall-cmd --reload
+sudo setsebool -P httpd_can_network_connect 1       # ให้ nginx proxy ไป Node:3000
+# ไฟล์ config ของ PostgreSQL อยู่ที่ /var/lib/pgsql/16/data/ (postgresql.conf, pg_hba.conf)</pre></div><span class="flow-note"><b>ข้อควรระวัง:</b> ถ้า SELinux เป็น enforcing และ Node ฟังพอร์ต 6000 ต้องอนุญาตพอร์ตด้วย (<code>semanage port -a -t http_port_t -p tcp 6000</code> หรือกำหนด type ที่เหมาะสม) · ขั้นตอน 3–8 ของแผนติดตั้งเหมือน Ubuntu ทุกประการ (path และ systemd unit ใช้ไฟล์เดิม)</span></div><div class="step-card"><div class="top"><h4>Windows Server 2019 / 2022<span>ตามหัวข้อ “ติดตั้งบน Windows Server” ของคู่มือ 05 <span class="badge warn">ยังไม่ได้ทดสอบในโครงการนี้</span></span></h4></div><ol class="steps"><li><b>PostgreSQL:</b> ติดตั้งจาก EDB installer → เปิด SQL Shell (psql) รัน <code>\i 'C:/smart-er/db/00_create_db.sql'</code> ต่อด้วย 01–04, 07, 08 ด้วย user <code>er_owner</code></li><li><b>Node.js:</b> ติดตั้ง Node.js 22 LTS (MSI) → <code>cd C:\smart-er\app</code> → <code>npm ci --omit=dev</code> → คัดลอก <code>.env.example</code> เป็น <code>.env</code></li><li><b>Windows Service:</b> ใช้ NSSM — <code>nssm install SmartER "C:\Program Files\nodejs\node.exe" C:\smart-er\app\server.js</code> ตั้ง AppDirectory = <code>C:\smart-er\app</code></li><li><b>Firewall:</b> <code>New-NetFirewallRule -DisplayName "Smart ER HL7" -Direction Inbound -Protocol TCP -LocalPort 6000 -RemoteAddress 192.168.10.0/24 -Action Allow</code> และพอร์ต 443 (IIS ARR หรือ nginx for Windows เป็น reverse proxy + certificate)</li><li><b>Backup:</b> Task Scheduler เรียก <code>pg_dump -Fc -h localhost -U er_owner -d smart_er -f D:\backup\smart_er_&lt;วันที่&gt;.dump</code></li></ol><span class="flow-note">ตั้ง Time Zone เป็น SE Asia Standard Time และเปิด Windows Time (NTP) ให้เวลาตรงกับ monitor · อย่าลืมสิทธิ์ของ Service Account ให้อ่านโฟลเดอร์แอปอย่างเดียว</span></div><div class="step-card"><div class="top"><h4>Oracle Solaris (SPARC/x86) และ macOS<span>ข้อมูลสำหรับตัดสินใจ</span></h4></div><div class="table-wrap"><table class="tight"><thead><tr><th>OS</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead><tbody><tr><td>Solaris SPARC</td><td><span class="badge no">ไม่แนะนำ</span></td><td>Node.js ไม่มี binary ทางการสำหรับ Solaris SPARC และไม่ได้ทดสอบในโครงการนี้ — ถ้าองค์กรใช้ Solaris เป็นมาตรฐาน แนะนำให้รันแอป+DB บน Linux VM/Zone แยก</td></tr><tr><td>macOS (สำหรับพัฒนา)</td><td><span class="badge warn">ยังไม่ได้ทดสอบในโครงการนี้</span></td><td><code>brew install postgresql@16 node@22</code> แล้วรัน 00–08 และ <code>node server.js</code> ได้ตามปกติ — ใช้เพื่อพัฒนา/สาธิตเท่านั้น ไม่ใช่ production</td></tr></tbody></table></div></div></section><section id="cloud"><div class="sec-head"><div class="sec-num">4</div><h2>Deploy บน Vercel + Neon<small>สำหรับทดสอบ / สาธิต</small></h2></div><div class="step-card"><div class="top"><h4>Vercel + Neon (ทดสอบ / สาธิต)<span>เส้นทางที่ deploy จริงครั้งนี้ <span class="badge ok">ทดสอบแล้ว</span></span></h4></div><p style="margin:0 0 6px"><b>ภาพรวม:</b> หน้าเว็บ (static) + API (serverless Express) อยู่บน Vercel, ฐานข้อมูลอยู่บน Neon PostgreSQL · ขอบเขต: <b>ไม่รวม HL7 listener</b> (Vercel ไม่รับ TCP) และใช้ข้อมูลจำลองเท่านั้น</p><ol class="steps"><li><b>Neon:</b> สร้าง project (region Singapore) → ได้ฐาน <code>neondb</code> และ role <code>neondb_owner</code> (ไม่ใช่ superuser)</li><li><b>ติดตั้ง schema ด้วย Neon SQL Editor</b> (เมื่อไม่มี psql): เลือกฐาน แล้ววางและรันตามลำดับ <code>db/neon_editor/neon_1_roles_schema.sql</code> → <code>neon_2_functions.sql</code> → <code>neon_3_views_seed.sql</code> — ไฟล์ที่ 1 ตั้งรหัสผ่าน role ต้อง <b>แก้เป็นรหัสผ่านของคุณเองก่อนรัน</b> ใช้ตัวอักษร+ตัวเลขล้วน</li><li><b>เตรียม DATABASE_URL:</b> <code>postgresql://er_app:&lt;รหัส&gt;@&lt;host ที่มี -pooler&gt;/neondb?sslmode=require</code> (ไม่ใส่เครื่องหมายคำพูดครอบรหัส)</li><li><b>GitHub:</b> สร้าง repo (Private) แล้วอัปโหลด <b>เนื้อหาของโฟลเดอร์ <code>app/</code></b> (ไม่เอา <code>node_modules</code> และ <code>.env</code>) ที่รากของ repo</li><li><b>Vercel:</b> Add New → Project → Import repo → Application Preset = <b>Express</b>, Root Directory = <code>./</code> → ใส่ Environment Variables: <code>DATABASE_URL</code> (และ <code>TV_KEY</code> เป็นค่าสุ่มยาว) → Deploy</li><li><b>ทดสอบ:</b> เปิด <code>https://&lt;โปรเจกต์&gt;.vercel.app/api/health</code> ต้องได้ <code>{"ok":true,"db":…}</code> → เข้าสู่ระบบ → เปลี่ยนรหัสผ่านทุกบัญชี</li></ol><div class="table-wrap"><table class="tight"><thead><tr><th>จุดที่เคยพลาด</th><th>ข้อควรทำ</th></tr></thead><tbody><tr><td>รหัสผ่านมีอักขระพิเศษ (<code>$ @ : / #</code>) ทำให้ URL/สคริปต์เพี้ยน</td><td>ใช้รหัสผ่านตัวอักษร+ตัวเลขล้วนยาว ≥ 24 ตัว</td></tr><tr><td><code>password authentication failed for user …</code></td><td>รหัสใน <code>DATABASE_URL</code> ไม่ตรงกับ role ใน DB → <code>ALTER ROLE er_app PASSWORD …</code> หรือแก้ URL</td></tr><tr><td>แก้ Environment Variable แล้วไม่เปลี่ยนผล</td><td>ต้อง <b>Redeploy</b> ทุกครั้ง — ตัวแปรใหม่มีผลกับ deployment ใหม่เท่านั้น; ค่าที่ตั้งเป็น Sensitive อ่านย้อนกลับไม่ได้ ต้องพิมพ์ใหม่</td></tr><tr><td>เปิด URL ของ deployment แล้วเจอหน้า Vercel Login</td><td>Deployment Protection ล็อก URL แบบ per-deployment — ใช้โดเมน production ของโปรเจกต์ (หรือปิด protection ตามนโยบาย)</td></tr><tr><td>จอ TV ขึ้นแถบสีส้ม “ขาดการเชื่อมต่อ”</td><td>ตั้ง <code>TV_KEY</code> แล้วแต่เปิดจอโดยไม่มี <code>?key=</code> — เปิดจากเมนู “จอ TV” ในระบบ ซึ่งแนบ key ให้ (ผ่าน <code>/api/tv-link</code>)</td></tr><tr><td>Neon ไม่ใช่ superuser สร้าง function แล้ว owner ผิด</td><td>สคริปต์ทำ <code>GRANT er_owner TO CURRENT_USER …; SET ROLE er_owner;</code> ก่อนสร้าง object (มีใน neon_1 แล้ว)</td></tr><tr><td><code>too many connections</code></td><td>ใช้ host แบบ <code>-pooler</code> ใน <code>DATABASE_URL</code> เสมอ ส่วน migration/psql ใช้ direct host</td></tr></tbody></table></div></div></section><section id="post"><div class="sec-head"><div class="sec-num">5</div><h2>หลังติดตั้ง และการตรวจสอบ</h2></div><div class="table-wrap"><table class=""><thead><tr><th>งาน</th><th>คำสั่ง / วิธี</th></tr></thead><tbody><tr><td>เปลี่ยนรหัสผ่านผู้ใช้เริ่มต้น</td><td><code>SELECT er.fn_user_create('admin','ผู้ดูแลระบบ','ADMIN','<รหัสใหม่>');</code> (ทำซ้ำกับ nurse01, reg01 หรือปิดใช้) — รันในฐานะ <code>er_owner</code></td></tr><tr><td>สร้างผู้ใช้แพทย์</td><td><code>SET ROLE er_owner; SELECT er.fn_user_create('doctor01','แพทย์ ER 01','DOCTOR','<รหัส>'); RESET ROLE;</code></td></tr><tr><td>ตั้งชื่อ รพ. / แหล่ง HN</td><td><code>UPDATE er.setting SET setting_value='…' WHERE setting_key IN ('hospital_name','hn_source');</code></td></tr><tr><td>ตั้ง TV_KEY</td><td>ค่าสุ่มยาว ใน <code>.env</code> (หรือ Environment Variable ของ Vercel) แล้ว restart/redeploy</td></tr><tr><td>ตรวจ health</td><td><code>curl -s http://127.0.0.1:3000/api/health</code> → <code>{"ok":true,…}</code></td></tr><tr><td>smoke test</td><td><code>psql -U er_app -d smart_er -f 05_smoke_test.sql</code> ต้องจบด้วย SMOKE TEST PASSED</td></tr><tr><td>จำลอง monitor</td><td><code>node tools/hl7-simulator.js 127.0.0.1 6000 &lt;HN&gt; &lt;เตียง&gt; 20</code> → ต้องได้ ACK (MSA|AA)</td></tr><tr><td>ตรวจรายการ test ครบ</td><td>ดูหัวข้อ “10 ทดสอบก่อนใช้งาน” ในคู่มือ 05 (15 ข้อ)</td></tr></tbody></table></div></section><section id="upg"><div class="sec-head"><div class="sec-num">6</div><h2>อัปเกรดและ Rollback</h2></div><ol class="steps"><li><b>สำรองก่อนเสมอ:</b> <code>pg_dump -Fc</code> ฐานข้อมูล + สำเนา <code>.env</code> และโฟลเดอร์ <code>app/</code></li><li>รันไฟล์ migration ใหม่ด้วย <code>er_owner</code> (<code>-v ON_ERROR_STOP=1</code>) — <b>รันซ้ำได้เฉพาะ</b> <code>02_functions.sql</code>, <code>03_views_security.sql</code> และ <code>07_bed_tablet.sql</code> (ใช้ <code>CREATE OR REPLACE</code> / <code>IF NOT EXISTS</code>) ส่วน <code>01_schema.sql</code> สร้างตารางตรง ๆ <b>รันซ้ำบนฐานที่มีตารางแล้วไม่ได้</b> — การเปลี่ยนโครงสร้างตารางต้องเขียนไฟล์ migration (<code>ALTER TABLE</code>) แยกต่างหาก</li><li>คัดลอกไฟล์แอปใหม่ แล้ว <code>sudo systemctl restart smart-er</code> (Vercel: push ขึ้น GitHub แล้ว deploy อัตโนมัติ)</li><li>ตรวจ <code>/api/health</code> และ smoke test</li></ol><span class="flow-note warn"><b>Rollback:</b> (1) คืนไฟล์แอปเวอร์ชันก่อนหน้าแล้ว restart (Vercel: เลือก deployment เก่า → Promote / Instant Rollback); (2) ถ้า migration ทำข้อมูลเสีย — restore จาก dump ลงฐานทดสอบก่อน ตรวจ แล้วจึงสลับ ห้าม restore ทับฐานจริงทันที; <b>ทดสอบ restore ทุกไตรมาส</b></span></section><section id="ops"><div class="sec-head"><div class="sec-num">7</div><h2>Backup &amp; บำรุงรักษา</h2></div><div class="table-wrap"><table class="tight"><thead><tr><th>งาน</th><th>ความถี่</th><th>วิธี</th></tr></thead><tbody><tr><td>Logical backup</td><td>ทุกวัน</td><td><code>deploy/backup.sh</code> (pg_dump -Fc เก็บ 14 วัน) + คัดลอกออกนอกเครื่อง</td></tr><tr><td>PITR</td><td>ต่อเนื่อง</td><td>pgBackRest / WAL archiving (แนะนำเมื่อใช้งานจริง)</td></tr><tr><td>Partition ล่วงหน้า / ลบของเก่า</td><td>ทุกวัน</td><td><code>06_maintenance.sql</code> → <code>fn_create_partitions(3)</code>, <code>fn_purge_partitions</code> (cron / Task Scheduler)</td></tr><tr><td>ตรวจ HL7 error</td><td>ทุกวัน</td><td><code>SELECT parse_status,count(*) FROM er.hl7_message WHERE received_at>now()-interval '1 day' GROUP BY 1;</code></td></tr><tr><td>ทดสอบ restore</td><td>ทุกไตรมาส</td><td><code>createdb smart_er_test && pg_restore -d smart_er_test &lt;dump&gt;</code></td></tr></tbody></table></div></section>
+    <footer class="page-footer">เอกสารชุด Smart ER · 07 คู่มือ Install/Setup/Deploy · ทดสอบบนเครื่องจริงก่อนใช้งานเสมอ — ป้ายสถานะระบุเส้นทางที่ผ่านการทดสอบ</footer>
+  </main>
+</div>
+
+<script>
+  var links=Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var secs=links.map(function(l){return document.querySelector(l.getAttribute('href'))}).filter(Boolean);
+  function setActive(id){links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+id)})}
+  if('IntersectionObserver' in window){var ob=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)setActive(e.target.id)})},{rootMargin:'-15% 0px -70% 0px',threshold:0});secs.forEach(function(s){ob.observe(s)})}
+  setActive('overview');
+</script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Smart ER — Workflow ผู้ป่วยห้องฉุกเฉิน</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  .esi{display:inline-flex; align-items:center; gap:8px; font-weight:700}
+  .esi i{width:14px; height:14px; border-radius:4px; display:inline-block; border:1px solid rgba(0,0,0,.12)}
+  .lane-legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .step-card .role{font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:3px 10px; border-radius:999px; background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .step-card .role.nurse{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .step-card .role.doc{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .step-card .role.sys{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+  .step-card ul{margin:8px 0 0; padding-left:20px; color:var(--ink-soft); font-size:13.5px}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px}
+  @media (max-width:880px){ .two-col{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">ER</div>
+      <div class="brand-text"><b>Smart ER</b><span>Workflow ห้องฉุกเฉิน</span></div>
+    </div>
+
+    <div class="nav-section-title">เริ่มต้น</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#overview"><span class="dot"></span>ภาพรวม &amp; แหล่งข้อมูล</a></li>
+      <li><a class="nav-link" href="#actors"><span class="dot"></span>ผู้เกี่ยวข้อง (Actors)</a></li>
+    </ul>
+
+    <div class="nav-section-title">Workflow</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#flow"><span class="num">1</span>ผังขั้นตอนหลัก</a></li>
+      <li><a class="nav-link" href="#steps"><span class="num">2</span>รายละเอียดแต่ละขั้นตอน</a></li>
+      <li><a class="nav-link" href="#triage"><span class="num">3</span>ระดับความเร่งด่วน (สี)</a></li>
+      <li><a class="nav-link" href="#status"><span class="num">4</span>สถานะผู้ป่วย (State)</a></li>
+      <li><a class="nav-link" href="#queue"><span class="num">5</span>Flow คิว &amp; การเรียก</a></li>
+    </ul>
+
+    <div class="nav-section-title">ระบบ</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#screens"><span class="dot"></span>หน้าจอ ↔ ขั้นตอน</a></li>
+      <li><a class="nav-link" href="#data"><span class="dot"></span>โครงสร้างข้อมูลที่แนะนำ</a></li>
+      <li><a class="nav-link" href="#confirm"><span class="dot"></span>ประเด็นที่ต้องยืนยัน</a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <b>จัดทำโดย</b>
+      PTS Innovations Co., Ltd.<br>
+      Smart ER — เอกสารวิเคราะห์ Workflow
+    </div>
+  </aside>
+
+  <main>
+
+    <section id="overview">
+      <h1 style="font-size:26px; margin:0 0 4px">Smart ER — Workflow ผู้ป่วยห้องฉุกเฉิน</h1>
+      <p style="color:var(--ink-soft); margin:0">Triage → ลงทะเบียน / HN → คัดกรอง ESI → แพทย์ตรวจ → Lab / X-ray → สังเกตอาการ → จำหน่าย / Admit / ส่งต่อ ICU · CCU · Cath lab</p>
+
+      <div class="meta-row">
+        <span class="chip">ระบบ: <b>Smart ER</b></span>
+        <span class="chip">หน้าจอในคู่มือ: <b>9 หน้าจอ</b></span>
+        <span class="chip">เตียง: <b>R1–R3, N1–N2, NT1–NT11, T12–T21, 29–38</b></span>
+        <span class="chip">ระดับสี: <b>5 ระดับ</b></span>
+        <span class="chip">สถานะเอกสาร: <b>ร่างเพื่อยืนยัน</b></span>
+        <span class="chip">อัปเดต: <b>2026-09-26</b></span>
+      </div>
+
+      <div class="callout">
+        <div class="ic">i</div>
+        <div class="body">
+          <div class="head"><strong>ที่มาของการวิเคราะห์</strong><span class="pill done">3 แหล่ง</span></div>
+          <b>(1) คู่มือ Smart ER</b> (9 หัวข้อ — Login, ผังเตียง, ลงทะเบียน, สายรัดข้อมือ, จัดการคิว, เรียกผู้ป่วย, ตั้งค่า, จอติดตามสถานะ)
+          <b>(2) บันทึกลายมือ</b> ผังขั้นตอน Triage → ICU/CCU/Cath lab และ
+          <b>(3) ภาพหน้างานจริง</b> จอ TV หน้าห้องฉุกเฉิน + ป้ายคัดแยก 5 สี —
+          นำมารวมเป็น Workflow เดียว ส่วนที่ได้จากลายมือซึ่งอ่านไม่ชัดถูกแยกไว้ในหัวข้อ “ประเด็นที่ต้องยืนยัน”
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <h3>ข้อค้นพบหลัก <span class="tag">Insight</span></h3>
+          <div class="kv"><span>จุดแยกสาย</span><span>Crisis / Non-crisis</span></div>
+          <div class="kv"><span>Crisis</span><span>รักษาก่อน ลงทะเบียนตาม</span></div>
+          <div class="kv"><span>“HN รอบ 2”</span><span>เลข ER ชั่วคราว → HN จริง</span></div>
+          <div class="kv"><span>ปลายทาง</span><span>D/C · Admit · ICU/CCU · Cath lab</span></div>
+        </div>
+        <div class="card">
+          <h3>ผลลัพธ์ของระบบ <span class="tag">Output</span></h3>
+          <div class="kv"><span>สายรัดข้อมือ</span><span>Barcode HN</span></div>
+          <div class="kv"><span>ผังเตียง</span><span>ว่าง / ใช้งาน / สี ESI</span></div>
+          <div class="kv"><span>คิว</span><span>รอเรียก → เรียกแล้ว → เสร็จ</span></div>
+          <div class="kv"><span>จอ TV ญาติ</span><span>HN · เตียง · สถานะ · สี</span></div>
+        </div>
+        <div class="card">
+          <h3>เชื่อมต่อภายนอก <span class="tag">Integration</span></h3>
+          <div class="kv"><span>HIS / เวชระเบียน</span><span>HN, ชื่อผู้ป่วย</span></div>
+          <div class="kv"><span>LIS / PACS</span><span>ผลเลือด / X-ray</span></div>
+          <div class="kv"><span>EMR</span><span>บันทึกการรักษา</span></div>
+          <div class="kv"><span>TTS</span><span>Google / Browser</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="actors">
+      <div class="sec-head"><div class="sec-num">A</div><h2>ผู้เกี่ยวข้อง (Actors)<small>ใครทำอะไรในระบบ</small></h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>ผู้ใช้</th><th>บทบาทใน Smart ER</th><th>หน้าจอที่ใช้</th><th>สิทธิ์</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><b>พยาบาลคัดกรอง (Triage)</b></td><td>รับผู้ป่วย ประเมินเบื้องต้น แยก Crisis / Non-crisis ระบุระดับ ESI</td><td>ลงทะเบียน, ผังเตียง</td><td><span class="badge required">เขียน</span></td></tr>
+            <tr><td class="num">2</td><td><b>เจ้าหน้าที่เวชระเบียน</b></td><td>ออก / ค้นหา HN พิมพ์สายรัดข้อมือ รวมเลขชั่วคราวกับ HN จริง</td><td>ลงทะเบียน, สำเร็จ</td><td><span class="badge required">เขียน</span></td></tr>
+            <tr><td class="num">3</td><td><b>พยาบาล ER</b></td><td>จัดเตียง จัดคิว เรียกผู้ป่วย อัปเดตสถานะ (รอผลเลือด, รอ X-ray ฯลฯ)</td><td>ผังเตียง, จัดการคิว, เรียกผู้ป่วย</td><td><span class="badge required">เขียน</span></td></tr>
+            <tr><td class="num">4</td><td><b>แพทย์</b></td><td>ตรวจ สั่ง Lab / Med / X-ray ตัดสินใจ D/C · Admit · Refer</td><td>ผังเตียง (อ่าน), EMR</td><td><span class="badge foundation">อ่าน + สั่งการ</span></td></tr>
+            <tr><td class="num">5</td><td><b>ผู้ดูแลระบบ</b></td><td>ตั้งค่าธีม เสียงเรียก รอบสลับหน้าจอ จัดการผู้ใช้</td><td>ตั้งค่า</td><td><span class="badge critical">Admin</span></td></tr>
+            <tr><td class="num">6</td><td><b>ผู้ป่วย / ญาติ</b></td><td>ดูสถานะบนจอ TV ฟังเสียงเรียก</td><td>จอติดตามสถานะ</td><td><span class="badge optional">ดูอย่างเดียว</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="flow">
+      <div class="sec-head"><div class="sec-num">1</div><h2>ผังขั้นตอนหลัก<small>End-to-end Patient Flow</small></h2></div>
+      <p class="sec-lede">รวมผังลายมือ (Triage → HN → คัดกรอง → ESI → แพทย์ → เตียงสังเกตอาการ → EMR → ICU/CCU/Cath lab) เข้ากับหน้าจอในคู่มือ เส้นสีแดงคือ <b>Fast track</b> สำหรับผู้ป่วยวิกฤต</p>
+      <div class="diagram-card">
+<pre class="mermaid">
+flowchart TD
+  A([ผู้ป่วยมาถึง ER]) --> B{Triage<br/>Crisis?}
+  B -- Crisis / ESI 1-2 --> C[เข้าห้อง Resus ทันที<br/>เตียง R1–R3]
+  C --> C1[ออกเลข ER ชั่วคราว]
+  C1 --> D1[แพทย์ช่วยชีวิต]
+  B -- Non-crisis --> E[ลงทะเบียน<br/>ค้นหา / สร้าง HN]
+  E --> F[พิมพ์สายรัดข้อมือ<br/>Barcode HN]
+  F --> G[พยาบาลคัดกรอง<br/>ประเมิน ESI 1–5 / สี]
+  G --> H[จัดเตียง + เข้าคิว<br/>สถานะ: รอเรียก]
+  H --> I[เรียกผู้ป่วย<br/>เสียง TTS + จอ TV]
+  I --> D[แพทย์ตรวจ]
+  D1 --> M[รวมเลขชั่วคราว → HN จริง<br/>'HN รอบ 2']
+  M --> D
+  D --> J[สั่ง LAB / Med / X-ray]
+  J --> K[สถานะ: รอผลเลือด / รอ X-ray / CT / MRI]
+  K --> L[เตียงสังเกตอาการ<br/>สังเกตอาการหลังฉีดยา]
+  L --> N[แพทย์ประเมินซ้ำ<br/>บันทึก EMR]
+  N --> O{Disposition}
+  O -- อาการดีขึ้น --> P([จำหน่ายกลับบ้าน])
+  O -- Admit --> Q([Admit หอผู้ป่วย])
+  O -- วิกฤต --> R([ICU / CCU])
+  O -- STEMI --> S([Cath lab])
+  O -- ส่งต่อ --> T([Refer รพ.อื่น])
+
+  classDef crisis fill:#FBE9E7,stroke:#B3261E,color:#7A241C;
+  classDef sys fill:#FBF0DD,stroke:#8A5A16,color:#5c3b0c;
+  class C,C1,D1,M crisis;
+  class F,H,I,K sys;
+  linkStyle 1 stroke:#B3261E,stroke-width:2px;
+</pre>
+      </div>
+      <div class="lane-legend">
+        <span class="chip"><b style="color:#B3261E">■</b> Fast track (Crisis)</span>
+        <span class="chip"><b style="color:#8A5A16">■</b> จุดที่ Smart ER สร้าง / แสดงผล</span>
+        <span class="chip"><b style="color:#177A67">■</b> ขั้นตอนทางคลินิกปกติ</span>
+      </div>
+    </section>
+
+    <section id="steps">
+      <div class="sec-head"><div class="sec-num">2</div><h2>รายละเอียดแต่ละขั้นตอน<small>Input · Action · Output</small></h2></div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.1 Triage — คัดแยก Crisis / Non-crisis<span>จุดแรกที่ผู้ป่วยพบเจ้าหน้าที่</span></h4><span class="role nurse">Triage Nurse</span></div>
+        <ul>
+          <li>ประเมินสัญญาณชีพ / อาการนำ ตัดสินใจภายใน 1–2 นาที</li>
+          <li><b>Crisis</b> (หมดสติ, หยุดหายใจ, ช็อก) → เข้าห้อง Resus ทันที ไม่ต้องรอลงทะเบียน</li>
+          <li><b>Non-crisis</b> → ส่งไปจุดลงทะเบียน</li>
+        </ul>
+        <div class="fields"><span class="field">arrival_time</span><span class="field">chief_complaint</span><span class="field new">crisis_flag</span></div>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.2 ลงทะเบียน / ออก HN<span>คู่มือหัวข้อ 3–4</span></h4><span class="role">เวชระเบียน</span></div>
+        <ul>
+          <li>ค้นหา HN เดิม หรือกด <b>สร้าง HN</b> สำหรับผู้ป่วยใหม่ กรอกชื่อ–นามสกุล</li>
+          <li>พิมพ์ <b>สายรัดข้อมือ</b> (Barcode HN, ชื่อ, วันที่) — ต้องตรวจสอบข้อมูลก่อนพิมพ์</li>
+          <li>ผู้ป่วย Crisis ได้ <b>เลข ER ชั่วคราว</b> ก่อน แล้วรวมกับ HN จริงภายหลัง (“HN รอบ 2” ในบันทึก)</li>
+        </ul>
+        <div class="fields"><span class="field">hn</span><span class="field">first_name</span><span class="field">last_name</span><span class="field new">temp_er_no</span><span class="field new">merged_to_hn</span></div>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.3 พยาบาลคัดกรอง — ระบุ ESI / สี<span>เตียงคัดกรอง 1–3 ในบันทึก</span></h4><span class="role nurse">พยาบาล</span></div>
+        <ul>
+          <li>ประเมินระดับ ESI 1–5 → กำหนดสี (แดง / ชมพู / เหลือง / เขียว / ขาว)</li>
+          <li>บันทึก Diagnosis เบื้องต้น สัญญาณชีพ</li>
+          <li>สีนี้จะแสดงบนผังเตียงและจอ TV ทันที</li>
+        </ul>
+        <div class="fields"><span class="field">esi_level</span><span class="field">triage_color</span><span class="field">vital_signs</span><span class="field">triage_by</span><span class="field">triage_time</span></div>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.4 จัดเตียง &amp; เข้าคิว<span>คู่มือหัวข้อ 2, 5, 7</span></h4><span class="role sys">Smart ER</span></div>
+        <ul>
+          <li>เลือกเตียงว่างจากผังเตียง (R / N / NT / T / 20–21 / จุดคัดกรอง / VVIP / สังเกตอาการ 29–38)</li>
+          <li>เพิ่มผู้ป่วยเข้าคิว ด้วยการค้นหา HN → สถานะ <b>รอเรียก</b></li>
+          <li>ลำดับคิวควรเรียงตาม <b>ระดับ ESI ก่อน</b> แล้วจึงเวลามาถึง</li>
+        </ul>
+        <div class="fields"><span class="field">bed_code</span><span class="field">queue_no</span><span class="field">queue_status</span><span class="field">priority</span></div>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.5 เรียกผู้ป่วย<span>คู่มือหัวข้อ 6</span></h4><span class="role sys">Smart ER</span></div>
+        <ul>
+          <li>กด <b>เรียก</b> → ระบบประกาศเสียง (Google TTS / Browser TTS) และแสดงบนจอ</li>
+          <li>ปุ่ม <b>เรียกซ้ำ</b> · <b>เสร็จ</b> · <b>ยกเลิก</b> — บันทึกเวลาเรียกทุกครั้ง</li>
+        </ul>
+        <div class="fields"><span class="field">called_at</span><span class="field">recall_count</span><span class="field">called_by</span></div>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.6 แพทย์ตรวจ &amp; สั่งการ<span>ตามบันทึก: Doctor → LAB / Med / X-Ray</span></h4><span class="role doc">แพทย์</span></div>
+        <ul>
+          <li>ตรวจร่างกาย สั่ง LAB / ยา / X-ray / CT / MRI</li>
+          <li>พยาบาลเปลี่ยนสถานะเป็น <b>รอผลเลือด</b>, <b>รอผลเลือดและ X-ray</b>, <b>รอ X-ray / CT / MRI</b> — ญาติเห็นบนจอ</li>
+        </ul>
+        <div class="fields"><span class="field">doctor_id</span><span class="field">order_lab</span><span class="field">order_xray</span><span class="field">status_code</span></div>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.7 สังเกตอาการ &amp; บันทึก EMR<span>เตียงสังเกตอาการ (4–6 ในบันทึก / 29–38 ในระบบ)</span></h4><span class="role nurse">พยาบาล</span></div>
+        <ul>
+          <li>ย้ายเตียงไปโซนสังเกตอาการ สถานะ <b>สังเกตอาการหลังฉีดยา</b></li>
+          <li>ผลการรักษาทั้งหมดบันทึกเข้า EMR ของโรงพยาบาล</li>
+        </ul>
+      </div>
+
+      <div class="step-card">
+        <div class="top"><h4>2.8 Disposition — จำหน่าย / Admit / ส่งต่อ<span>ปลายทาง ICU · CCU · Cath lab</span></h4><span class="role doc">แพทย์</span></div>
+        <ul>
+          <li>จำหน่ายกลับบ้าน, Admit หอผู้ป่วย, ส่ง ICU / CCU, ส่ง Cath lab, Refer</li>
+          <li>ระบบ <b>คืนเตียงเป็นว่าง</b> และนำผู้ป่วยออกจากจอ TV อัตโนมัติ</li>
+        </ul>
+        <div class="fields"><span class="field">disposition</span><span class="field">discharge_time</span><span class="field new">er_length_of_stay</span></div>
+        <span class="flow-note"><b>KPI ที่ได้ฟรีจากข้อมูลนี้:</b> Door-to-Doctor time, ER Length of Stay, เวลารอแยกตามสี, สัดส่วน Admit — ใช้ทำรายงานคุณภาพ ER ได้ทันที</span>
+      </div>
+    </section>
+
+    <section id="triage">
+      <div class="sec-head"><div class="sec-num">3</div><h2>ระดับความเร่งด่วน (สี)<small>ตามป้ายคัดแยกหน้าห้องฉุกเฉิน</small></h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ESI</th><th>สี</th><th>ชื่อบนจอ</th><th>ความหมาย</th><th>เวลาที่ต้องได้รับการตรวจ</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><span class="esi"><i style="background:#E53935"></i>แดง</span></td><td>Immediate</td><td>คุกคามต่อชีวิต เช่น หยุดหายใจ ช็อก หมดสติ</td><td><span class="badge critical">ทันที</span></td></tr>
+            <tr><td class="num">2</td><td><span class="esi"><i style="background:#E040C8"></i>ชมพู</span></td><td>Emergency</td><td>เสี่ยงอาการทรุดลง เช่น เจ็บหน้าอก แน่นหน้าอก ซึมลง</td><td><span class="badge critical">ภายใน 10 นาที</span></td></tr>
+            <tr><td class="num">3</td><td><span class="esi"><i style="background:#F5D90A"></i>เหลือง</span></td><td>Urgency</td><td>อาการรุนแรงปานกลาง เช่น ปวดท้องสงสัยไส้ติ่ง</td><td><span class="badge ongoing">ภายใน 30 นาที</span></td></tr>
+            <tr><td class="num">4</td><td><span class="esi"><i style="background:#43B047"></i>เขียว</span></td><td>Semi-urgency</td><td>ไม่รุนแรง เช่น ปวดท้อง ปวดศีรษะเล็กน้อย ไข้หวัด</td><td><span class="badge required">รอได้ 2–4 ชั่วโมง</span></td></tr>
+            <tr><td class="num">5</td><td><span class="esi"><i style="background:#FFFFFF"></i>ขาว</span></td><td>Non-urgency</td><td>ไม่เร่งด่วน</td><td><span class="badge optional">รอได้มากกว่า 4 ชั่วโมง</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <span class="flow-note warn"><b>ข้อสังเกต:</b> ระยะเวลาเป้าหมายข้างต้นอ่านจากป้ายในภาพถ่าย ต้องยืนยันกับเกณฑ์ที่โรงพยาบาลใช้จริง (MOPH ED Triage / ESI) ก่อนตั้งค่าเป็นเวลาแจ้งเตือนในระบบ</span>
+    </section>
+
+    <section id="status">
+      <div class="sec-head"><div class="sec-num">4</div><h2>สถานะผู้ป่วย (State)<small>ข้อความที่แสดงบนจอญาติ</small></h2></div>
+      <div class="diagram-card">
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> ลงทะเบียนแล้ว
+  ลงทะเบียนแล้ว --> รอคัดกรอง
+  รอคัดกรอง --> รอแพทย์ตรวจ
+  รอแพทย์ตรวจ --> กำลังตรวจ
+  กำลังตรวจ --> รอผลเลือด
+  กำลังตรวจ --> รอผลเลือดและXray
+  กำลังตรวจ --> รอXray_CT_MRI
+  รอผลเลือด --> สังเกตอาการ
+  รอผลเลือดและXray --> สังเกตอาการ
+  รอXray_CT_MRI --> สังเกตอาการ
+  สังเกตอาการ --> รอแพทย์ประเมินซ้ำ
+  รอแพทย์ประเมินซ้ำ --> รอAdmit
+  รอแพทย์ประเมินซ้ำ --> รอส่งต่อ
+  รอแพทย์ประเมินซ้ำ --> จำหน่าย
+  รอAdmit --> [*]
+  รอส่งต่อ --> [*]
+  จำหน่าย --> [*]
+</pre>
+      </div>
+      <span class="flow-note">ข้อความสถานะควรเป็น <b>รายการที่กำหนดไว้ (Master list)</b> ไม่ใช่พิมพ์อิสระ — ป้องกันการเขียนข้อมูลทางคลินิกลงบนจอสาธารณะ และทำให้รายงานสถิติได้</span>
+    </section>
+
+    <section id="queue">
+      <div class="sec-head"><div class="sec-num">5</div><h2>Flow คิว &amp; การเรียก<small>คู่มือหัวข้อ 5–7</small></h2></div>
+      <div class="diagram-card">
+<pre class="mermaid">
+sequenceDiagram
+  participant N as พยาบาล ER
+  participant S as Smart ER
+  participant T as จอ TV / ลำโพง
+  participant P as ผู้ป่วย / ญาติ
+  N->>S: ค้นหา HN → เพิ่มเข้าคิว
+  S-->>N: แท็บ "รอเรียก" (+1 คิว)
+  N->>S: กด "เรียก"
+  S->>T: ประกาศเสียง TTS + แสดงบนจอ
+  T-->>P: "เชิญหมายเลข ... ที่เตียง ..."
+  alt ผู้ป่วยไม่มา
+    N->>S: เรียกซ้ำ (recall +1)
+    S->>T: ประกาศซ้ำ
+  else มาแล้ว
+    N->>S: เสร็จ
+    S-->>T: นำออกจากรายการเรียก
+  else ไม่ต้องการเรียกแล้ว
+    N->>S: ยกเลิก (ระบุเหตุผล)
+  end
+</pre>
+      </div>
+    </section>
+
+    <section id="screens">
+      <div class="sec-head"><div class="sec-num">S</div><h2>หน้าจอ ↔ ขั้นตอน<small>จากคู่มือ 9 หัวข้อ</small></h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>หน้าจอ</th><th>ขั้นตอน</th><th>ผู้ใช้</th><th>ข้อเสนอเพิ่ม</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>เข้าสู่ระบบ</td><td>—</td><td>ทุกคน</td><td>ล็อกเอาต์อัตโนมัติ, บัญชีรายบุคคล</td></tr>
+            <tr><td class="num">2</td><td>แสดงเตียงผู้ป่วย</td><td>2.4, 2.7</td><td>พยาบาล, แพทย์</td><td>สีขอบเตียงตาม ESI, เวลาอยู่ในเตียง</td></tr>
+            <tr><td class="num">3</td><td>ลงทะเบียนผู้ป่วย</td><td>2.2</td><td>เวชระเบียน</td><td>ตรวจ HN ซ้ำ, เลข ER ชั่วคราว</td></tr>
+            <tr><td class="num">4</td><td>ลงทะเบียนสำเร็จ</td><td>2.2</td><td>เวชระเบียน</td><td>พิมพ์สายรัดซ้ำ + log</td></tr>
+            <tr><td class="num">5 / 7</td><td>จัดการคิว</td><td>2.4</td><td>พยาบาล</td><td>เรียงคิวตาม ESI อัตโนมัติ</td></tr>
+            <tr><td class="num">6</td><td>เรียกผู้ป่วย</td><td>2.5</td><td>พยาบาล</td><td>บังคับเหตุผลเมื่อยกเลิก</td></tr>
+            <tr><td class="num">8</td><td>ตั้งค่าระบบ</td><td>—</td><td>Admin</td><td>จำกัดเฉพาะ Admin</td></tr>
+            <tr><td class="num">9</td><td>ติดตามสถานะผู้ป่วยและญาติ</td><td>2.3–2.8</td><td>ญาติ (จอ TV)</td><td>ปกปิด HN บางส่วน, แบ่งหน้าอัตโนมัติ</td></tr>
+            <tr><td class="num">+</td><td><b>(ใหม่) หน้าคัดกรอง ESI</b></td><td>2.3</td><td>พยาบาล</td><td>ยังไม่มีในคู่มือ — สีมาจากไหนต้องมีหน้าจอบันทึก</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="data">
+      <div class="sec-head"><div class="sec-num">D</div><h2>โครงสร้างข้อมูลที่แนะนำ<small>กรณีพัฒนาบน Oracle Database / APEX</small></h2></div>
+      <div class="code-block">
+        <div class="code-label">ER schema (แนวคิด)</div>
+<pre>ER_PATIENT      (HN PK, FIRST_NAME, LAST_NAME, DOB, TEMP_ER_NO, MERGED_TO_HN)
+ER_VISIT        (VISIT_ID PK, HN FK, ARRIVAL_TIME, CRISIS_FLAG, ESI_LEVEL,
+                 TRIAGE_BY, TRIAGE_TIME, DOCTOR_ID, DOOR_TO_DOC_MIN,
+                 DISPOSITION, DISCHARGE_TIME)
+ER_BED          (BED_CODE PK, ZONE [R|N|NT|T|OBS|VVIP], SORT_NO, ACTIVE)
+ER_BED_ASSIGN   (VISIT_ID FK, BED_CODE FK, IN_TIME, OUT_TIME)
+ER_STATUS_MST   (STATUS_CODE PK, DISPLAY_TEXT_TH, SHOW_ON_TV Y/N)
+ER_STATUS_LOG   (VISIT_ID FK, STATUS_CODE FK, CHANGED_BY, CHANGED_AT)
+ER_QUEUE        (QUEUE_ID PK, VISIT_ID FK, PRIORITY, STATUS [WAIT|CALLED|DONE|CANCEL],
+                 CALLED_AT, RECALL_COUNT, CANCEL_REASON)
+ER_SETTING      (KEY PK, VALUE)   -- theme, tts_engine, tv_rotate_sec, mask_hn
+ER_AUDIT        (WHO, WHEN, ACTION, OBJECT, OLD_VAL, NEW_VAL)
+
+-- View สำหรับจอ TV: ส่งเฉพาะคอลัมน์ที่จำเป็น (ไม่มีชื่อผู้ป่วย)
+V_ER_TV_BOARD   (HN_MASKED, BED_CODE, ESI_LEVEL, DISPLAY_TEXT_TH, WAIT_MIN)</pre>
+      </div>
+    </section>
+
+    <section id="confirm">
+      <div class="sec-head"><div class="sec-num">?</div><h2>ประเด็นที่ต้องยืนยัน<small>จากบันทึกลายมือที่อ่านไม่ชัด</small></h2></div>
+      <ul class="checklist">
+        <li>ข้อความ “Program … ยังไม่ได้เลือกใช้งาน” ใกล้ Crisis / Non-crisis — ยังไม่ได้เลือกระบบ HIS/โปรแกรมหลักใช่หรือไม่</li>
+        <li>รายการย่อย 3 ข้อใต้กล่อง “Smart ER” (มุมบนซ้าย) — ขอบเขตงาน / โมดูลที่ต้องการ</li>
+        <li>ตัวเลข “staff ≈ 1,000,000”, “Sog”, “110”, “mm — 5,000” — เป็นงบประมาณ (ค่าพัฒนา / ฮาร์ดแวร์ / MA) หรือไม่</li>
+        <li>“ESI – X”, “Dig – 13 …” — เกณฑ์ ESI หรือจำนวน Diagnosis ที่ต้องรองรับ</li>
+        <li>เตียงคัดกรอง 1–3 และสังเกตอาการ 4–6 ในบันทึก เทียบกับรหัสเตียงจริงในระบบ (R/N/NT/T/29–38)</li>
+        <li>“HN รอบ 2” — เป็นการรวมเลขชั่วคราวกับ HN จริง หรือเป็นการออก Visit ใหม่</li>
+        <li>เชื่อม HIS / LIS / PACS / EMR ตัวใด ผ่านวิธีไหน (API, DB link, HL7/FHIR)</li>
+      </ul>
+    </section>
+
+    <span class="flow-note"><b>เอกสารที่เกี่ยวข้อง:</b> ภาพรวมโครงสร้างระบบและการไหลของข้อมูลจริง ดู <a href="08_smart-er-project-summary.html">08_smart-er-project-summary.html</a> · วิธีใช้งานจริงตามขั้นตอนนี้ ดู <a href="06_smart-er-user-manual.html">06_smart-er-user-manual.html</a> · สารบัญเอกสารชุดทั้งหมด: <a href="00_smart-er-index.html">00_smart-er-index.html</a></span>
+    <footer class="page-footer">
+      เอกสารชุด Smart ER · 01 Workflow · ดูต่อ: 02 ตัวอย่าง WebApp · 03 TV Dashboard · 04 ข้อควรระวังและความเสี่ยง
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: { primaryColor: '#E4F4F0', primaryBorderColor: '#177A67', lineColor: '#8A93A0', fontFamily: 'Sarabun, sans-serif' },
+    flowchart: { curve: 'basis' }
+  });
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var sections = links.map(function(l){ return document.querySelector(l.getAttribute('href')); }).filter(Boolean);
+  function setActive(id){ links.forEach(function(l){ l.classList.toggle('active', l.getAttribute('href') === '#' + id); }); }
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){ if (entry.isIntersecting) setActive(entry.target.id); });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function(s){ observer.observe(s); });
+  }
+  links.forEach(function(l){ l.addEventListener('click', function(){ setActive(l.getAttribute('href').slice(1)); }); });
+  setActive('overview');
+</script>
+</body>
+</html>

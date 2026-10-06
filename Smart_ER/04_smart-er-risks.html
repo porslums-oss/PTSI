@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Smart ER — ข้อควรระวังและความเสี่ยง</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF1F6;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#8A93A0;
+    --line:#E1E4EA;
+
+    --accent:#177A67;
+    --accent-dark:#0F5346;
+    --accent-soft:#E4F4F0;
+
+    --sidebar-bg:#12161F;
+    --sidebar-bg-soft:#1A202C;
+    --sidebar-line:#262D3B;
+    --sidebar-text:#C9CDD6;
+    --sidebar-text-dim:#767E8F;
+
+    --badge-foundation-bg:#EAEDFC; --badge-foundation-fg:#3B4BB0;
+    --badge-critical-bg:#FBE9E7;   --badge-critical-fg:#B3261E;
+    --badge-required-bg:#E4F4F0;   --badge-required-fg:#0F5346;
+    --badge-optional-bg:#F1F2F5;   --badge-optional-fg:#5B6272;
+    --badge-ongoing-bg:#FBF0DD;    --badge-ongoing-fg:#8A5A16;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,34,.04), 0 8px 24px -12px rgba(20,24,34,.10);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Sarabun','Segoe UI',sans-serif;
+    font-size:15px;
+    line-height:1.65;
+  }
+  h1,h2,h3,h4,.brand-text,.nav-section-title{font-family:'Prompt','Sarabun',sans-serif}
+  code, .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:var(--sidebar-bg);
+    color:var(--sidebar-text);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:22px 18px 18px;
+    display:flex; flex-direction:column;
+  }
+  .brand{display:flex; align-items:center; gap:12px; padding:2px 4px 20px; border-bottom:1px solid var(--sidebar-line); margin-bottom:16px}
+  .brand-mark{
+    width:38px; height:38px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,var(--accent),#2FB89E);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+  }
+  .brand-text b{display:block; font-size:14.5px; color:#fff; font-weight:600}
+  .brand-text span{display:block; font-size:11.5px; color:var(--sidebar-text-dim); margin-top:2px}
+
+  .nav-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--sidebar-text-dim); margin:18px 6px 8px; font-weight:600;
+  }
+  .nav-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .nav-link{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:8px; font-size:13.5px;
+    color:var(--sidebar-text); text-decoration:none;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{background:var(--sidebar-bg-soft); color:#fff}
+  .nav-link.active{background:var(--accent-soft); color:var(--accent-dark); font-weight:600}
+  .nav-link .dot{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; flex:none}
+  .nav-link .num{
+    width:20px; height:20px; border-radius:6px; flex:none;
+    background:var(--sidebar-bg-soft); color:var(--sidebar-text-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600;
+  }
+  .nav-link.active .num{background:var(--accent); color:#fff}
+
+  .sidebar-footer{
+    margin-top:auto; padding-top:16px; border-top:1px solid var(--sidebar-line);
+    font-size:12px; color:var(--sidebar-text-dim);
+  }
+  .sidebar-footer b{display:block; color:var(--sidebar-text); font-size:12.5px; margin-bottom:2px}
+
+  /* ---------- Main ---------- */
+  main{padding:40px clamp(20px,4vw,56px) 90px; max-width:1180px}
+  section{scroll-margin-top:24px}
+  section + section{margin-top:56px}
+
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:6px}
+  .sec-num{
+    width:34px; height:34px; border-radius:50%; flex:none;
+    background:var(--ink); color:#fff; font-weight:700; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  section h2{margin:0; font-size:21px; font-weight:600}
+  section h2 small{display:block; font-size:12.5px; font-weight:500; color:var(--ink-faint); margin-top:2px; text-transform:none; letter-spacing:0}
+  .sec-lede{margin:14px 0 0; color:var(--ink-soft); max-width:78ch}
+
+  /* meta chips (hero) */
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; color:var(--ink-soft);
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* callout */
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px 20px; margin-top:20px; display:flex; gap:14px; align-items:flex-start;
+  }
+  .callout .ic{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-dark);
+    flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .callout .body{flex:1}
+  .callout .head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px}
+  .callout .head strong{font-size:14.5px}
+  .pill{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; white-space:nowrap}
+  .pill.done{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+
+  /* card grid */
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:20px}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; border-top:3px solid var(--accent);
+  }
+  .card h3{margin:0 0 12px; font-size:14px; display:flex; justify-content:space-between; align-items:center}
+  .card h3 .tag{font-size:10px; font-weight:700; background:var(--accent-soft); color:var(--accent-dark); padding:2px 8px; border-radius:999px; letter-spacing:.04em; text-transform:uppercase}
+  .kv{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--ink-soft)}
+  .kv span:last-child{font-weight:600; text-align:right}
+
+  /* table */
+  .table-wrap{overflow-x:auto; margin-top:20px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
+  thead th{
+    text-align:left; background:var(--surface-soft); color:var(--ink-soft);
+    font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;
+    padding:11px 14px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#FBFCFD}
+  td.num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); width:32px}
+
+  .badge{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap}
+  .badge.foundation{background:var(--badge-foundation-bg); color:var(--badge-foundation-fg)}
+  .badge.critical{background:var(--badge-critical-bg); color:var(--badge-critical-fg)}
+  .badge.required{background:var(--badge-required-bg); color:var(--badge-required-fg)}
+  .badge.optional{background:var(--badge-optional-bg); color:var(--badge-optional-fg)}
+  .badge.ongoing{background:var(--badge-ongoing-bg); color:var(--badge-ongoing-fg)}
+
+  /* step detail cards */
+  .step-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-top:18px;
+  }
+  .step-card .top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px}
+  .step-card h4{margin:0; font-size:15.5px}
+  .step-card h4 span{display:block; font-size:12px; color:var(--ink-faint); font-weight:400; margin-top:2px}
+  .fields{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .field{
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:7px;
+    padding:5px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+  }
+  .field.new{background:var(--accent-soft); border-color:#BFE4DA; color:var(--accent-dark); font-weight:600}
+
+  .flow-note{
+    display:block; margin-top:14px; line-height:1.65;
+    background:var(--surface-soft); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .flow-note b{color:var(--ink)}
+  .flow-note.warn{background:var(--badge-critical-bg); border-color:#F3C9C4; color:#7A241C}
+  .flow-note.warn b{color:#7A241C}
+
+  /* code block */
+  .code-block{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:14px; overflow-x:auto;
+  }
+  .code-block .code-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-soft);
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .code-block pre{
+    margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7;
+    color:var(--ink); white-space:pre; overflow-x:auto;
+  }
+
+  /* mermaid card */
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-top:20px; overflow-x:auto;
+  }
+
+  /* rules list */
+  .rule-list{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:10px}
+  .rule-list li{
+    background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 16px;
+    display:flex; gap:12px; align-items:flex-start; box-shadow:var(--shadow);
+  }
+  .rule-list .marker{
+    width:22px; height:22px; border-radius:50%; flex:none; margin-top:1px;
+    background:var(--badge-critical-bg); color:var(--badge-critical-fg);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .rule-list li span{color:var(--ink-soft); font-size:13.5px}
+  .rule-list li b{color:var(--ink)}
+
+  /* checklist */
+  .checklist{list-style:none; margin:20px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .checklist li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; color:var(--ink-soft);
+    background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+  }
+  .checklist li::before{
+    content:""; width:16px; height:16px; border-radius:5px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint);
+  }
+
+  footer.page-footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px;
+  }
+
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:relative; height:auto}
+    main{padding:28px 18px 60px}
+  }
+
+  .heat{display:grid; grid-template-columns:90px repeat(3,1fr); gap:6px; margin-top:20px; font-size:12.5px}
+  .heat div{border-radius:8px; padding:10px; min-height:70px}
+  .heat .ax{background:transparent; color:var(--ink-faint); font-weight:600; display:flex; align-items:center; justify-content:center; text-align:center; min-height:auto}
+  .heat .lo{background:#E4F4F0} .heat .md{background:#FBF0DD} .heat .hi{background:#FBE9E7}
+  .heat b{display:inline-block; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:1px 7px; margin:2px; font-family:'IBM Plex Mono',monospace; font-size:11.5px}
+  td b.id{font-family:'IBM Plex Mono',monospace}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">ER</div>
+      <div class="brand-text"><b>Smart ER</b><span>ข้อควรระวัง &amp; ความเสี่ยง</span></div>
+    </div>
+    <div class="nav-section-title">ภาพรวม</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#overview"><span class="dot"></span>สรุปผู้บริหาร</a></li>
+      <li><a class="nav-link" href="#matrix"><span class="dot"></span>Risk Matrix</a></li>
+    </ul>
+    <div class="nav-section-title">ความเสี่ยงรายด้าน</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#clinical"><span class="num">1</span>ความปลอดภัยผู้ป่วย</a></li>
+      <li><a class="nav-link" href="#privacy"><span class="num">2</span>ข้อมูลส่วนบุคคล (PDPA)</a></li>
+      <li><a class="nav-link" href="#security"><span class="num">3</span>ความมั่นคงปลอดภัย</a></li>
+      <li><a class="nav-link" href="#integration"><span class="num">4</span>Integration &amp; ข้อมูล</a></li>
+      <li><a class="nav-link" href="#availability"><span class="num">5</span>ความพร้อมใช้งาน</a></li>
+      <li><a class="nav-link" href="#database"><span class="num">6</span>ฐานข้อมูล &amp; Performance</a></li>
+      <li><a class="nav-link" href="#project"><span class="num">7</span>โครงการ &amp; การใช้งานจริง</a></li>
+    </ul>
+    <div class="nav-section-title">ก่อนขึ้นระบบ</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="#golive"><span class="dot"></span>Go-live Checklist</a></li>
+    </ul>
+    <div class="sidebar-footer"><b>จัดทำโดย</b>PTS Innovations Co., Ltd.<br>Smart ER — Risk Assessment</div>
+  </aside>
+
+  <main>
+    <section id="overview">
+      <h1 style="font-size:26px; margin:0 0 4px">Smart ER — แนวทางข้อควรระวังและความเสี่ยง</h1>
+      <p style="color:var(--ink-soft); margin:0">ระบบห้องฉุกเฉินเกี่ยวข้องกับชีวิตผู้ป่วยและข้อมูลสุขภาพ (ข้อมูลอ่อนไหวตาม PDPA มาตรา 26) — ความผิดพลาดเล็กน้อยมีผลกระทบสูง</p>
+      <div class="meta-row">
+        <span class="chip">ความเสี่ยงที่ระบุ: <b>24 รายการ</b></span>
+        <span class="chip">ระดับสูง: <b>8</b></span>
+        <span class="chip">ระดับกลาง: <b>12</b></span>
+        <span class="chip">ระดับต่ำ: <b>4</b></span>
+        <span class="chip">อัปเดต: <b>2026-09-26</b></span>
+      </div>
+      <div class="callout" style="border-left-color:#B3261E">
+        <div class="ic" style="background:var(--badge-critical-bg);color:var(--badge-critical-fg)">!</div>
+        <div class="body">
+          <div class="head"><strong>5 เรื่องที่ต้องแก้ก่อนใช้งานจริง</strong><span class="pill" style="background:var(--badge-critical-bg);color:var(--badge-critical-fg)">Critical</span></div>
+          (1) จอ TV แสดง HN เต็มในที่สาธารณะ → <b>ปกปิดบางส่วน</b> ·
+          (2) จอค้างแล้วญาติเห็นข้อมูลเก่า → <b>แสดงเวลาอัปเดต + แจ้งเตือนเมื่อขาดการเชื่อมต่อ</b> ·
+          (3) ระบบไม่มีหน้าบันทึก ESI ในคู่มือ → <b>สีต้องมาจากการประเมินของพยาบาล มีผู้รับผิดชอบ</b> ·
+          (4) Google TTS ส่งข้อความออกนอก รพ. → <b>ใช้ TTS ภายใน / ไม่เรียกชื่อ</b> ·
+          (5) HN ซ้ำ / เลขชั่วคราวไม่ถูกรวม → <b>กระบวนการ Merge HN ที่ตรวจสอบได้</b>
+        </div>
+      </div>
+    </section>
+
+    <section id="matrix">
+      <div class="sec-head"><div class="sec-num">M</div><h2>Risk Matrix<small>โอกาสเกิด × ผลกระทบ (รหัสอ้างอิงตามตารางด้านล่าง)</small></h2></div>
+      <div class="heat">
+        <div class="ax"></div><div class="ax">ผลกระทบต่ำ</div><div class="ax">ผลกระทบปานกลาง</div><div class="ax">ผลกระทบสูง</div>
+        <div class="ax">โอกาสสูง</div><div class="md"><b>J3</b></div><div class="md"><b>C3</b><b>A2</b><b>I3</b></div><div class="hi"><b>P1</b><b>C2</b><b>A1</b></div>
+        <div class="ax">โอกาสปานกลาง</div><div class="lo"><b>A4</b></div><div class="md"><b>P3</b><b>S3</b><b>D2</b><b>D3</b><b>J2</b></div><div class="hi"><b>C1</b><b>P2</b><b>S1</b><b>I1</b><b>I2</b></div>
+        <div class="ax">โอกาสต่ำ</div><div class="lo"><b>D4</b><b>J1</b></div><div class="lo"><b>A3</b></div><div class="md"><b>S2</b><b>D1</b><b>P4</b></div>
+      </div>
+    </section>
+
+    <section id="clinical">
+      <div class="sec-head"><div class="sec-num">1</div><h2>ความปลอดภัยผู้ป่วย<small>Clinical Safety</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">C1</b></td><td>คัดแยกผิดระดับ (Under-triage) หรือไม่ประเมินซ้ำเมื่ออาการเปลี่ยน</td><td>ผู้ป่วยวิกฤตรอนานเกินเกณฑ์</td><td><span class="badge critical">สูง</span></td><td>บังคับเลือก ESI ก่อนเข้าคิว, แจ้งเตือนประเมินซ้ำตามรอบเวลา, เก็บประวัติการเปลี่ยนระดับ</td></tr>
+          <tr><td><b class="id">C2</b></td><td>สถานะบนจอไม่ตรงกับความจริง (พยาบาลไม่ได้อัปเดต)</td><td>ญาติเข้าใจผิด ร้องเรียน, ทีมสื่อสารผิด</td><td><span class="badge critical">สูง</span></td><td>อัปเดตสถานะอัตโนมัติจากเหตุการณ์ (สั่ง Lab → รอผลเลือด, ผลออก → รอแพทย์), แสดงเวลาอัปเดตล่าสุด</td></tr>
+          <tr><td><b class="id">C3</b></td><td>เรียงคิวตามเวลามาถึงแทนความเร่งด่วน</td><td>ผู้ป่วยสีชมพูรอหลังผู้ป่วยสีเขียว</td><td><span class="badge ongoing">กลาง</span></td><td>เรียงคิวตาม ESI → เวลามาถึง เป็นค่าเริ่มต้น, ข้ามคิวได้แต่ต้องระบุเหตุผล</td></tr>
+        </tbody>
+      </table></div>
+      <span class="flow-note"><b>ขอบเขตระบบ:</b> Smart ER เป็นเครื่องมือ <b>แสดงผลและบริหารงาน</b> ไม่ใช่ระบบตัดสินใจทางคลินิก — ระดับ ESI ต้องมาจากพยาบาลผู้ประเมินเสมอ ควรระบุข้อนี้ในเอกสารส่งมอบ</span>
+    </section>
+
+    <section id="privacy">
+      <div class="sec-head"><div class="sec-num">2</div><h2>ข้อมูลส่วนบุคคล (PDPA)<small>ข้อมูลสุขภาพ = ข้อมูลอ่อนไหว</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">P1</b></td><td>จอ TV ในโถงแสดง HN เต็ม + สถานะการรักษา (เห็นในภาพหน้างานจริง)</td><td>บุคคลภายนอกเชื่อม HN กับผู้ป่วยได้ — เปิดเผยข้อมูลสุขภาพ</td><td><span class="badge critical">สูง</span></td><td>แสดง 4 หลักท้าย (•••9743) หรือเลขคิว ER แทน HN, ไม่แสดงชื่อ, View เฉพาะสำหรับจอ</td></tr>
+          <tr><td><b class="id">P2</b></td><td>เรียกชื่อ–นามสกุลผ่านลำโพง / Google TTS</td><td>เปิดเผยตัวตน + ส่งข้อมูลไปผู้ให้บริการต่างประเทศ</td><td><span class="badge critical">สูง</span></td><td>เรียกด้วยเลข + เตียงเท่านั้น, ใช้ Browser/On-prem TTS, หากใช้ Cloud ต้องมี DPA</td></tr>
+          <tr><td><b class="id">P3</b></td><td>ข้อความสถานะพิมพ์อิสระ (เช่นใส่ชื่อโรค)</td><td>ข้อมูลวินิจฉัยขึ้นจอสาธารณะ</td><td><span class="badge ongoing">กลาง</span></td><td>ใช้ Master list สถานะที่ผ่านการอนุมัติ มีคอลัมน์ SHOW_ON_TV</td></tr>
+          <tr><td><b class="id">P4</b></td><td>สายรัดข้อมือพิมพ์ผิดคน / พิมพ์ซ้ำไม่มีบันทึก</td><td>ระบุตัวผู้ป่วยผิด (Patient ID error)</td><td><span class="badge ongoing">กลาง</span></td><td>ยืนยัน 2 ตัวบ่งชี้ (ชื่อ + วันเกิด) ก่อนพิมพ์, log การพิมพ์ซ้ำ</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="security">
+      <div class="sec-head"><div class="sec-num">3</div><h2>ความมั่นคงปลอดภัย<small>Security &amp; Access Control</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">S1</b></td><td>ใช้บัญชีรวม (เช่น “nurse”) บนเครื่องที่เปิดค้างใน ER</td><td>ตรวจสอบย้อนหลังไม่ได้ว่าใครแก้ไข</td><td><span class="badge critical">สูง</span></td><td>บัญชีรายบุคคล, Session timeout, Quick re-login (บัตร/PIN), Audit trail ทุกการแก้ไข</td></tr>
+          <tr><td><b class="id">S2</b></td><td>เครื่องจอ TV (Windows ในภาพ) login ด้วยสิทธิ์ที่แก้ไขข้อมูลได้ / ถูกใช้ท่องเว็บ</td><td>คนภายนอกเข้าถึงระบบผ่านจอ</td><td><span class="badge ongoing">กลาง</span></td><td>บัญชี Read-only เฉพาะจอ, Kiosk mode, ซ่อน Taskbar, ล็อก USB/คีย์บอร์ด</td></tr>
+          <tr><td><b class="id">S3</b></td><td>หน้าตั้งค่าระบบเข้าถึงได้ทุกคน</td><td>เปลี่ยนเสียง/ธีม/รอบสลับจอโดยไม่ตั้งใจ</td><td><span class="badge ongoing">กลาง</span></td><td>Role-based: Admin / Nurse / Registration / Display</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="integration">
+      <div class="sec-head"><div class="sec-num">4</div><h2>Integration &amp; คุณภาพข้อมูล<small>HIS · LIS · PACS · EMR</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">I1</b></td><td>“สร้าง HN” ใน Smart ER ซ้ำกับ HN ใน HIS</td><td>เวชระเบียนแยกเป็น 2 ชุด ประวัติแพ้ยาหาย</td><td><span class="badge critical">สูง</span></td><td>HIS เป็นเจ้าของ HN เพียงระบบเดียว (Single source of truth), Smart ER ดึง/จองเลขผ่าน API</td></tr>
+          <tr><td><b class="id">I2</b></td><td>ผู้ป่วยวิกฤตใช้เลข ER ชั่วคราวแล้วไม่ถูกรวมกับ HN จริง (“HN รอบ 2”)</td><td>Lab / X-ray ผูกผิดคน หรือค้างในเลขชั่วคราว</td><td><span class="badge critical">สูง</span></td><td>ขั้นตอน Merge HN ที่ต้องยืนยัน 2 คน, รายงานเลขชั่วคราวค้างเกิน 24 ชม.</td></tr>
+          <tr><td><b class="id">I3</b></td><td>บันทึกซ้ำซ้อน (พยาบาลกรอกทั้ง HIS และ Smart ER)</td><td>ภาระงานเพิ่ม → ข้อมูลไม่อัปเดต (ย้อนไป C2)</td><td><span class="badge ongoing">กลาง</span></td><td>ดึงสถานะ Lab/X-ray อัตโนมัติจาก LIS/PACS, ลดการคลิกให้เหลือ 1–2 ครั้งต่อการเปลี่ยนสถานะ</td></tr>
+        </tbody>
+      </table></div>
+      <span class="flow-note warn"><b>ยังไม่ได้ข้อสรุป:</b> บันทึกลายมือระบุว่า “Program … ยังไม่ได้เลือกใช้งาน” — ต้องยืนยันระบบ HIS และวิธีเชื่อมต่อ (API / DB link / HL7 / FHIR) ก่อนประเมินขอบเขตและงบประมาณ</span>
+    </section>
+
+    <section id="availability">
+      <div class="sec-head"><div class="sec-num">5</div><h2>ความพร้อมใช้งาน<small>ER เปิด 24/7</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">A1</b></td><td>จอ TV ค้าง / Browser หลุด / เครื่องเข้า Sleep แต่ยังแสดงข้อมูลเก่า</td><td>ญาติเห็นข้อมูลผิด โดยไม่มีใครรู้</td><td><span class="badge critical">สูง</span></td><td>แสดง “อัปเดตล่าสุด” + แบนเนอร์เตือนเมื่อไม่ได้รับข้อมูลเกิน 60 วินาที (มีในตัวอย่าง Dashboard), ปิด Sleep, Watchdog รีโหลด</td></tr>
+          <tr><td><b class="id">A2</b></td><td>เครือข่าย/เซิร์ฟเวอร์ล่มระหว่างเวร</td><td>ลงทะเบียน/เรียกคิวไม่ได้</td><td><span class="badge ongoing">กลาง</span></td><td>แผน Downtime: ใบคัดกรองกระดาษ + ไวท์บอร์ด, บันทึกย้อนหลังเมื่อระบบกลับมา, ซ้อมปีละ 2 ครั้ง</td></tr>
+          <tr><td><b class="id">A3</b></td><td>เครื่องพิมพ์สายรัดข้อมือเสีย</td><td>ระบุตัวผู้ป่วยไม่ได้</td><td><span class="badge required">ต่ำ</span></td><td>เครื่องสำรอง / พิมพ์จากเครื่องพิมพ์ทั่วไปบนสติกเกอร์</td></tr>
+          <tr><td><b class="id">A4</b></td><td>Google TTS ใช้ไม่ได้เมื่ออินเทอร์เน็ตล่ม</td><td>ไม่มีเสียงเรียก</td><td><span class="badge required">ต่ำ</span></td><td>Fallback เป็น Browser TTS อัตโนมัติ</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="database">
+      <div class="sec-head"><div class="sec-num">6</div><h2>ฐานข้อมูล &amp; Performance<small>กรณีพัฒนาบน Oracle Database / APEX</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">D1</b></td><td>ไม่มี Backup / ไม่เคยทดสอบ Restore</td><td>ข้อมูลการรักษาสูญหาย</td><td><span class="badge ongoing">กลาง</span></td><td>RMAN level 0/1 + Archivelog, ทดสอบ Restore รายไตรมาส, พิจารณา Data Guard สำหรับ 24/7</td></tr>
+          <tr><td><b class="id">D2</b></td><td>จอหลายจอ + ผู้ใช้หลายเครื่อง Poll ทุก 10–15 วินาที</td><td>Query ซ้ำจำนวนมาก, Session เต็ม</td><td><span class="badge ongoing">กลาง</span></td><td>View เบา (V_ER_TV_BOARD) + Index (VISIT_STATUS, DISCHARGE_TIME IS NULL), Result cache / ORDS cache, Connection pool</td></tr>
+          <tr><td><b class="id">D3</b></td><td>แก้ไขเตียง/คิวพร้อมกัน 2 คน (Lost update)</td><td>ผู้ป่วย 2 คนบนเตียงเดียวกัน</td><td><span class="badge ongoing">กลาง</span></td><td>Unique constraint เตียงที่ยังไม่ OUT, Optimistic locking (APEX checksum / row version)</td></tr>
+          <tr><td><b class="id">D4</b></td><td>ข้อมูลสะสมไม่ Purge / Archive</td><td>ประสิทธิภาพลดลงระยะยาว</td><td><span class="badge required">ต่ำ</span></td><td>Partition ตามเดือนสำหรับ STATUS_LOG / AUDIT, นโยบายเก็บข้อมูลตามระเบียบ รพ.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="project">
+      <div class="sec-head"><div class="sec-num">7</div><h2>โครงการ &amp; การใช้งานจริง<small>Project / Adoption</small></h2></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>รหัส</th><th>ความเสี่ยง</th><th>ผลกระทบ</th><th>ระดับ</th><th>แนวทางป้องกัน</th></tr></thead>
+        <tbody>
+          <tr><td><b class="id">J1</b></td><td>คู่มือปัจจุบันสร้างอัตโนมัติ (GenClip) — หัวข้อ 5 และ 7 ซ้ำกัน, ข้อมูลตัวอย่างสลับ (“วันเกิด 3 มี.ค. 2569” คือวันที่ลงทะเบียน)</td><td>ผู้ใช้สับสน</td><td><span class="badge required">ต่ำ</span></td><td>ทบทวนคู่มือโดยผู้ใช้จริง, เพิ่มหัวข้อคัดกรอง ESI / Downtime</td></tr>
+          <tr><td><b class="id">J2</b></td><td>ขอบเขต / งบประมาณยังไม่ชัด (ตัวเลขในบันทึก: staff ≈ 1,000,000, hardware, MA ≈ 5,000)</td><td>งานบานปลาย, งบไม่พอสำหรับ Integration</td><td><span class="badge ongoing">กลาง</span></td><td>แยก Phase: (1) ผังเตียง + คิว + จอ TV (2) Integration HIS/LIS (3) รายงาน KPI</td></tr>
+          <tr><td><b class="id">J3</b></td><td>จอ TV ตัวอักษรเล็ก/สีเหลืองอ่านยาก (เห็นจากภาพหน้างาน — แถบ Taskbar และ URL บาร์ยังแสดง)</td><td>ญาติอ่านไม่ออก ถามเจ้าหน้าที่ซ้ำ</td><td><span class="badge ongoing">กลาง</span></td><td>ตัวอักษร HN ≥ 2vw, ตัวอักษรเข้มบนสีเหลือง/ขาว, Kiosk เต็มจอ (ดู 03 TV Dashboard)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="golive">
+      <div class="sec-head"><div class="sec-num">✓</div><h2>Go-live Checklist<small>ตรวจก่อนเปิดใช้งานจริง</small></h2></div>
+      <ul class="checklist">
+        <li>ยืนยันเกณฑ์ ESI / สี / เวลาเป้าหมาย กับหัวหน้าพยาบาล ER และองค์กรแพทย์</li>
+        <li>ผ่านการประเมิน PDPA (DPIA) — การแสดงผลบนจอสาธารณะและเสียงเรียก</li>
+        <li>จอ TV: บัญชี Read-only, Kiosk mode, ปิด Sleep, HN ปกปิด, แบนเนอร์ขาดการเชื่อมต่อทำงาน</li>
+        <li>ทดสอบกระบวนการ Merge เลข ER ชั่วคราว → HN จริง พร้อม Lab/X-ray ที่ผูกอยู่</li>
+        <li>บัญชีผู้ใช้รายบุคคล + Role + Audit trail + Session timeout</li>
+        <li>Backup / Restore ทดสอบแล้ว, มี Monitoring (Tablespace, Session, Alert log)</li>
+        <li>Load test: จำนวนจอ × รอบ Refresh × ผู้ใช้พร้อมกันในช่วงพีค</li>
+        <li>แผน Downtime (กระดาษ) พร้อมใช้ และซ้อมกับพยาบาลทุกเวร</li>
+        <li>อบรมผู้ใช้ทุกกลุ่ม + คู่มือฉบับแก้ไข</li>
+        <li>กำหนดผู้รับผิดชอบ: เจ้าของระบบ (Clinical owner), IT support 24/7, ช่องทางแจ้งปัญหา</li>
+      </ul>
+    </section>
+
+    <span class="flow-note"><b>เอกสารที่เกี่ยวข้อง:</b> ความเสี่ยงด้านโค้ด/สคริปต์/การ deploy ใหม่ ดู <a href="10_smart-er-redeploy-risk.html">10_smart-er-redeploy-risk.html</a> · สารบัญเอกสารชุดทั้งหมด: <a href="00_smart-er-index.html">00_smart-er-index.html</a></span>
+    <footer class="page-footer">
+      เอกสารชุด Smart ER · 04 ข้อควรระวังและความเสี่ยง · ระดับความเสี่ยงเป็นการประเมินเบื้องต้นจากเอกสารและภาพที่ได้รับ ควรทบทวนร่วมกับผู้ใช้งานจริง
+    </footer>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: { primaryColor: '#E4F4F0', primaryBorderColor: '#177A67', lineColor: '#8A93A0', fontFamily: 'Sarabun, sans-serif' },
+    flowchart: { curve: 'basis' }
+  });
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var sections = links.map(function(l){ return document.querySelector(l.getAttribute('href')); }).filter(Boolean);
+  function setActive(id){ links.forEach(function(l){ l.classList.toggle('active', l.getAttribute('href') === '#' + id); }); }
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){ if (entry.isIntersecting) setActive(entry.target.id); });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function(s){ observer.observe(s); });
+  }
+  links.forEach(function(l){ l.addEventListener('click', function(){ setActive(l.getAttribute('href').slice(1)); }); });
+  setActive('overview');
+</script>
+</body>
+</html>

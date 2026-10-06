@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart ER — ER Diagram</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F6F7FA;
+    --surface:#FFFFFF;
+    --surface-soft:#EEF0F5;
+    --ink:#1B2028;
+    --ink-soft:#565D68;
+    --ink-faint:#88909B;
+    --line:#DBDEE5;
+    --accent:#3454D1;
+    --accent-soft:#EAEDFC;
+
+    --mod-master:#4C58B6;
+    --mod-master-bg:#EDEEFA;
+    --mod-sales:#177A67;
+    --mod-sales-bg:#E4F4F0;
+    --mod-purchase:#A8621A;
+    --mod-purchase-bg:#F8ECDE;
+    --mod-gl:#6B3F97;
+    --mod-gl-bg:#F0E7F7;
+    --mod-tax:#9C3245;
+    --mod-tax-bg:#F8E6E9;
+    --mod-shared:#565D68;
+    --mod-shared-bg:#E9EAED;
+
+    --radius:10px;
+    --font-display:"IBM Plex Sans", "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+    --font-body:"IBM Plex Sans", "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+    --font-mono:"IBM Plex Mono", ui-monospace, "Noto Sans Mono Thai", monospace;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#11141B;
+      --surface:#181C25;
+      --surface-soft:#1F2430;
+      --ink:#E8EAEF;
+      --ink-soft:#A6ADB9;
+      --ink-faint:#6E7581;
+      --line:#2C3140;
+      --accent:#8DA0FF;
+      --accent-soft:#232B4A;
+
+      --mod-master:#98A3F5;
+      --mod-master-bg:#242A52;
+      --mod-sales:#5FCBB2;
+      --mod-sales-bg:#173730;
+      --mod-purchase:#E3A15C;
+      --mod-purchase-bg:#3A2A16;
+      --mod-gl:#C7A0E8;
+      --mod-gl-bg:#332145;
+      --mod-tax:#E88C97;
+      --mod-tax-bg:#3B1D22;
+      --mod-shared:#A6ADB9;
+      --mod-shared-bg:#262B35;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#11141B;
+    --surface:#181C25;
+    --surface-soft:#1F2430;
+    --ink:#E8EAEF;
+    --ink-soft:#A6ADB9;
+    --ink-faint:#6E7581;
+    --line:#2C3140;
+    --accent:#8DA0FF;
+    --accent-soft:#232B4A;
+
+    --mod-master:#98A3F5;
+    --mod-master-bg:#242A52;
+    --mod-sales:#5FCBB2;
+    --mod-sales-bg:#173730;
+    --mod-purchase:#E3A15C;
+    --mod-purchase-bg:#3A2A16;
+    --mod-gl:#C7A0E8;
+    --mod-gl-bg:#332145;
+    --mod-tax:#E88C97;
+    --mod-tax-bg:#3B1D22;
+    --mod-shared:#A6ADB9;
+    --mod-shared-bg:#262B35;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    margin:0;
+    line-height:1.6;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:56px 28px 80px;}
+
+  /* ---------- Hero ---------- */
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(28px,4vw,42px);
+    line-height:1.15;
+    margin:0 0 14px;
+    text-wrap:balance;
+    max-width:16ch;
+  }
+  .lede{
+    font-size:16.5px;
+    color:var(--ink-soft);
+    max-width:68ch;
+    margin:0 0 26px;
+  }
+  .lede b{color:var(--ink); font-weight:600;}
+
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:10px;
+    margin-bottom:32px;
+  }
+  .meta-chip{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:100px;
+    padding:6px 14px;
+  }
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:8px 10px;
+    padding:18px 20px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:52px;
+  }
+  .legend-title{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    width:100%;
+    margin-bottom:4px;
+  }
+  .tag{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:13.5px; font-weight:500;
+    padding:5px 12px 5px 9px;
+    border-radius:100px;
+  }
+  .tag .dot{width:8px; height:8px; border-radius:50%; flex:none;}
+  .tag.master{color:var(--mod-master); background:var(--mod-master-bg);}
+  .tag.master .dot{background:var(--mod-master);}
+  .tag.sales{color:var(--mod-sales); background:var(--mod-sales-bg);}
+  .tag.sales .dot{background:var(--mod-sales);}
+  .tag.purchase{color:var(--mod-purchase); background:var(--mod-purchase-bg);}
+  .tag.purchase .dot{background:var(--mod-purchase);}
+  .tag.gl{color:var(--mod-gl); background:var(--mod-gl-bg);}
+  .tag.gl .dot{background:var(--mod-gl);}
+  .tag.tax{color:var(--mod-tax); background:var(--mod-tax-bg);}
+  .tag.tax .dot{background:var(--mod-tax);}
+  .tag.shared{color:var(--mod-shared); background:var(--mod-shared-bg);}
+  .tag.shared .dot{background:var(--mod-shared);}
+
+  /* ---------- Sections ---------- */
+  section{margin-bottom:60px;}
+  .sec-head{
+    display:flex; align-items:baseline; gap:12px;
+    margin-bottom:6px;
+  }
+  .sec-num{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ink-faint);
+  }
+  h2{
+    font-family:var(--font-display);
+    font-size:23px;
+    font-weight:600;
+    margin:0;
+  }
+  .sec-sub{
+    color:var(--ink-soft);
+    font-size:14.5px;
+    max-width:74ch;
+    margin:2px 0 20px;
+  }
+
+  figure{margin:0;}
+  .diagram-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    overflow-x:auto;
+  }
+  figcaption{
+    font-size:13.5px;
+    color:var(--ink-faint);
+    margin-top:10px;
+    max-width:78ch;
+  }
+  .refs{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--surface-soft);
+    border-radius:8px;
+    padding:9px 14px;
+    margin-top:14px;
+    display:inline-block;
+  }
+  .refs b{color:var(--ink); font-weight:600;}
+
+  /* ---------- Conventions / footer ---------- */
+  .conv-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(230px,1fr));
+    gap:14px;
+    margin-top:8px;
+  }
+  .conv-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .conv-card h3{
+    font-size:13.5px; margin:0 0 6px;
+    font-family:var(--font-mono); font-weight:600;
+    color:var(--accent);
+  }
+  .conv-card p{font-size:13.5px; color:var(--ink-soft); margin:0;}
+  .conv-card code{font-family:var(--font-mono); color:var(--ink);}
+
+  .deliverables{
+    display:flex; flex-wrap:wrap; gap:14px;
+    margin-top:10px;
+  }
+  .dl-card{
+    flex:1 1 220px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .dl-card .k{
+    font-family:var(--font-mono);
+    font-size:11.5px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:6px;
+  }
+  .dl-card .v{font-size:14px; color:var(--ink-soft);}
+
+  footer{
+    margin-top:70px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    font-size:13px;
+    color:var(--ink-faint);
+  }
+
+  table.legend-key{border-collapse:collapse; font-size:13.5px; margin-top:6px;}
+  table.legend-key td{padding:3px 14px 3px 0; color:var(--ink-soft);}
+  table.legend-key td.k{font-family:var(--font-mono); color:var(--ink); font-weight:600;}
+
+  .tag.hl7{color:var(--mod-purchase); background:var(--mod-purchase-bg);} .tag.hl7 .dot{background:var(--mod-purchase);}
+  .toc{display:flex; flex-wrap:wrap; gap:8px; margin:-30px 0 48px}
+  .toc a{font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); text-decoration:none; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:6px 12px}
+  .toc a:hover{color:var(--accent); border-color:var(--accent)}
+  .cards{display:flex; flex-direction:column; gap:12px; margin-top:18px}
+  .tcard{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--mc); border-radius:var(--radius); overflow:hidden}
+  .tcard summary{cursor:pointer; list-style:none; display:flex; gap:12px; align-items:baseline; padding:12px 16px; flex-wrap:wrap}
+  .tcard summary::-webkit-details-marker{display:none}
+  .tcard summary b{font-family:var(--font-mono); font-size:14px; color:var(--mc)}
+  .tcard summary span{color:var(--ink-soft); font-size:13.5px; flex:1}
+  .tcard summary i{font-style:normal; font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint)}
+  .tcard table{width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed}
+  .tcard th:nth-child(1){width:40px} .tcard th:nth-child(2){width:180px} .tcard th:nth-child(3){width:150px} .tcard th:nth-child(4){width:80px} .tcard th:nth-child(5){width:50px}
+  .tcard th{text-align:left; font-family:var(--font-mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-faint); background:var(--surface-soft); padding:7px 10px; border-top:1px solid var(--line)}
+  .tcard td{padding:6px 10px; border-top:1px solid var(--line); vertical-align:top}
+  .tcard td.c{color:var(--ink-faint); font-family:var(--font-mono); font-size:11.5px; width:34px}
+  .tcard td.n{font-family:var(--font-mono); font-weight:600; white-space:nowrap}
+  .tcard td.t{font-family:var(--font-mono); color:var(--ink-soft); white-space:nowrap; font-size:12px}
+  .tcard td.d{color:var(--ink-soft)}
+  .tcard .ref{display:inline-block; margin-left:8px; font-family:var(--font-mono); font-size:11.5px; color:var(--accent)}
+  .tcard .ck{font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint); padding:8px 16px; border-top:1px solid var(--line); background:var(--surface-soft)}
+  .k{display:inline-block; font-family:var(--font-mono); font-size:10.5px; font-weight:700; border-radius:4px; padding:1px 5px; margin-right:3px}
+  .k-PK{background:var(--mod-master-bg); color:var(--mod-master)} .k-FK{background:var(--mod-sales-bg); color:var(--mod-sales)}
+  .k-FKs{background:var(--mod-shared-bg); color:var(--mod-shared)} .k-UK{background:var(--mod-purchase-bg); color:var(--mod-purchase)}
+  .tbl-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin-top:16px}
+  .tbl-list div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px; color:var(--ink-soft)}
+  .tbl-list b{display:block; font-family:var(--font-mono); font-size:12.5px; color:var(--ink); margin-bottom:2px}
+  .tbl-list .n{float:right; font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Data Model Reference — PTS Innovations · Smart ER</p>
+  <h1>ผังฐานข้อมูลระบบห้องฉุกเฉิน</h1>
+  <p class="lede">
+    ER Diagram ของ <b>Smart ER</b> บน PostgreSQL (schema <code>er</code>) ครอบคลุม <b>ทะเบียนผู้ป่วย / HN → visit → คัดกรอง ESI → เตียง → คิว → จำหน่าย</b>,
+    การรับสัญญาณชีพจาก <b>Northern patient monitor (HL7 v2.6)</b>, <b>Tablet ประจำเตียง</b> ที่ดูได้เฉพาะเตียงตัวเอง และส่วนผู้ใช้ / audit —
+    สร้างจาก catalog ของฐานข้อมูลจริงโดยตรง (คอลัมน์ ชนิดข้อมูล และคำอธิบายตรงกับ DDL ทุกตัว)
+  </p>
+
+  <div class="meta-row">
+    <span class="meta-chip">26 tables</span>
+    <span class="meta-chip">237 columns</span>
+    <span class="meta-chip">23 FK + 12 logical refs</span>
+    <span class="meta-chip">11 views · 53 functions</span>
+    <span class="meta-chip">5 modules</span>
+    <span class="meta-chip">Target: PostgreSQL 16 / 17</span>
+    <span class="meta-chip">Updated 2026-10-06</span>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">Modules</div>
+    <span class="tag master"><span class="dot"></span>01 Master &amp; Setting</span>
+    <span class="tag sales"><span class="dot"></span>02 Patient &amp; Visit</span>
+    <span class="tag purchase"><span class="dot"></span>03 HL7 Interface</span>
+    <span class="tag gl"><span class="dot"></span>04 Bed Tablet</span>
+    <span class="tag tax"><span class="dot"></span>05 Security &amp; Audit</span>
+  </div>
+  <div class="toc"><a href="#m00">00 ภาพรวม</a><a href="#m01">01 Master</a><a href="#m02">02 Patient &amp; Visit</a><a href="#m03">03 HL7</a><a href="#m04">04 Tablet</a><a href="#m05">05 Security</a><a href="#m06">06 ผังรวม</a><a href="#m07">07 ข้อตกลง</a><a href="#m08">08 ไฟล์ประกอบ</a></div>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section id="m00">
+    <div class="sec-head"><span class="sec-num">00</span><h2>ภาพรวมการไหลของข้อมูล</h2></div>
+    <p class="sec-sub">จากอุปกรณ์หน้างาน (เครื่องสแกน, monitor, tablet, จอ TV) เข้าสู่ตารางในแต่ละโมดูล — ทุกการเขียนข้อมูลผ่าน PL/pgSQL function</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+flowchart LR
+  subgraph IN["อุปกรณ์หน้างาน"]
+    SC["เครื่องสแกนบาร์โค้ด<br/>(สายรัดข้อมือ)"]
+    MON["Northern monitor<br/>HL7 ORU^R01 / R40"]
+    TAB["Tablet ประจำเตียง"]
+    TVS["จอ TV ญาติ"]
+  end
+  subgraph M01["01 Master & Setting"]
+    ESI["ESI_LEVEL"]; BED["BED"]; ST["STATUS_MST"]; DP["DISPOSITION_MST"]; SET["SETTING"]
+  end
+  subgraph M02["02 Patient & Visit"]
+    PT["PATIENT<br/>HN"]; WB["WRISTBAND"]; VS["VISIT"]; TR["TRIAGE"]; Q["QUEUE"]; SL["SCAN_LOG"]
+  end
+  subgraph M03["03 HL7 Interface"]
+    DEV["HL7_DEVICE"]; VL["VITAL_LATEST"]; VSG["VITAL_SIGN<br/>(partition)"]; AL["HL7_ALARM"]; MSG["HL7_MESSAGE<br/>(partition)"]
+  end
+  subgraph M04["04 Bed Tablet"]
+    BT["BED_TERMINAL"]; BAL["BED_ACCESS_LOG"]
+  end
+  subgraph M05["05 Security & Audit"]
+    USR["APP_USER"]; SES["APP_SESSION"]; AUD["AUDIT_LOG"]
+  end
+  SC -- "fn_scan" --> WB
+  WB --> PT
+  SC -. log .-> SL
+  PT -- "1 : N" --> VS
+  VS --> TR
+  VS --> Q
+  VS -- "bed_code" --> BED
+  VS -- "esi_level" --> ESI
+  VS -- "status_code" --> ST
+  VS -- "disposition" --> DP
+  MON -- "fn_hl7_ingest" --> MSG
+  MON --> DEV
+  DEV -- "bed_code" --> BED
+  DEV --> VL
+  VL -. "ทุก 60 วินาที" .-> VSG
+  DEV --> AL
+  VL -. "visit_id" .-> VS
+  TAB -- "device token" --> BT
+  BT -- "bed_code (1:1)" --> BED
+  BT --> BAL
+  SES -. "bed-scoped session" .-> BT
+  USR --> SES
+  VS -. "trigger" .-> AUD
+  TVS -- "v_tv_board" --> VS
+</pre>
+    </figure>
+    <figcaption>ผู้ป่วยถูกค้นหาด้วยบาร์โค้ดสายรัดข้อมือ (WRISTBAND → PATIENT) · 1 ผู้ป่วยมีได้หลาย VISIT แต่เปิดอยู่ได้ครั้งละ 1 · เครื่อง monitor และ tablet ผูกกับ BED — จึงเชื่อมถึงผู้ป่วยผ่าน VISIT.bed_code ที่ยังไม่จำหน่าย</figcaption>
+  </section>
+
+  <!-- ============ MASTER & SETTING ============ -->
+  <section id="m01">
+    <div class="sec-head"><span class="sec-num">01</span><h2 style="color:var(--mod-master)">Master & Setting — ข้อมูลหลักและค่าตั้งค่า</h2></div>
+    <p class="sec-sub">ระดับ ESI / เตียง / สถานะการรักษา / ผลการจำหน่าย / ค่าตั้งค่าระบบ / เลขรันรายวัน</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+erDiagram
+  direction LR
+  BED ||--o{ BED_ASSIGNMENT : "bed_code"
+  BED ||--o{ BED_TERMINAL : "bed_code"
+  BED |o--o{ HL7_DEVICE : "bed_code"
+  ESI_LEVEL ||--o{ TRIAGE : "esi_level"
+  BED |o--o{ VISIT : "bed_code"
+  DISPOSITION_MST |o--o{ VISIT : "disposition_code"
+  ESI_LEVEL |o--o{ VISIT : "esi_level"
+  STATUS_MST ||--o{ VISIT : "status_code"
+  STATUS_MST ||--o{ VISIT_STATUS_LOG : "status_code"
+  BED |o..o{ APP_SESSION : "bed_code"
+  ESI_LEVEL {
+    smallint esi_level PK "ระดับ ESI 1 = วิกฤตสุด … 5 = ไม่เร่งด่วน"
+  }
+  BED {
+    varchar(20) bed_code PK "รหัสเตียง เช่น R1, N2, NT4, T12, 29"
+  }
+  STATUS_MST {
+    varchar(20) status_code PK "รหัสสถานะ เช่น WAIT_LAB, OBSERVE, DISCHARGED"
+  }
+  DISPOSITION_MST {
+    varchar(20) disposition_code PK "รหัสผลการจำหน่าย"
+  }
+  SETTING {
+    varchar(50) setting_key PK "ชื่อค่าตั้งค่า เช่น hn_source, tv_mask_hn, bed_session_min"
+  }
+  DAILY_COUNTER {
+    varchar(20) counter_name PK "ชื่อตัวนับ: VISIT / QUEUE"
+    date counter_date PK "วันที่ของตัวนับ (เริ่มใหม่ทุกวัน)"
+  }
+  APP_SESSION {
+    char(64) token PK "→ โมดูล 05 Security & Audit"
+  }
+  BED_ASSIGNMENT {
+    bigint assign_id PK "→ โมดูล 02 Patient & Visit"
+  }
+  BED_TERMINAL {
+    integer terminal_id PK "→ โมดูล 04 Bed Tablet"
+  }
+  HL7_DEVICE {
+    integer device_id PK "→ โมดูล 03 HL7 Interface"
+  }
+  TRIAGE {
+    bigint triage_id PK "→ โมดูล 02 Patient & Visit"
+  }
+  VISIT {
+    bigint visit_id PK "→ โมดูล 02 Patient & Visit"
+  }
+  VISIT_STATUS_LOG {
+    bigint log_id PK "→ โมดูล 02 Patient & Visit"
+  }
+</pre>
+    </figure>
+    <figcaption>ผังแสดงเฉพาะคอลัมน์ที่เป็นคีย์ (PK / FK / UK) — คอลัมน์ทั้งหมดอยู่ในตารางด้านล่าง · เส้นทึบ = FK จริง · เส้นประ = logical reference · ตารางที่มีคีย์เดียวพร้อมลูกศร = อยู่ในโมดูลอื่น</figcaption>
+    <div class="refs"><b>อ้างอิงข้ามโมดูล:</b> APP_SESSION.bed_code → BED · BED_ASSIGNMENT.bed_code → BED · BED_TERMINAL.bed_code → BED · HL7_DEVICE.bed_code → BED · TRIAGE.esi_level → ESI_LEVEL · VISIT.bed_code → BED · VISIT.disposition_code → DISPOSITION_MST · VISIT.esi_level → ESI_LEVEL · VISIT.status_code → STATUS_MST · VISIT_STATUS_LOG.status_code → STATUS_MST</div>
+    <div class="cards"><details class="tcard" style="--mc:var(--mod-master)" open><summary><b>ESI_LEVEL</b><span>ระดับความเร่งด่วน (ESI 1–5) และสีคัดแยก</span><i>6 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">esi_level</td><td class="t">smallint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">ระดับ ESI 1 = วิกฤตสุด … 5 = ไม่เร่งด่วน</td></tr><tr><td class="c">2</td><td class="n">name_th</td><td class="t">varchar(30)</td><td></td><td class="c">NN</td><td class="d">ชื่อสีภาษาไทย (แดง / ชมพู / เหลือง / เขียว / ขาว)</td></tr><tr><td class="c">3</td><td class="n">name_en</td><td class="t">varchar(30)</td><td></td><td class="c">NN</td><td class="d">ชื่อระดับภาษาอังกฤษ (Immediate … Non-urgency)</td></tr><tr><td class="c">4</td><td class="n">color_hex</td><td class="t">char(7)</td><td></td><td class="c">NN</td><td class="d">รหัสสีสำหรับแสดงผล เช่น #E53935</td></tr><tr><td class="c">5</td><td class="n">target_min</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">เวลาเป้าหมายที่ต้องได้รับการตรวจ (นาที) ใช้คำนวณ over_target</td></tr><tr><td class="c">6</td><td class="n">description</td><td class="t">varchar(200)</td><td></td><td class="c"></td><td class="d">คำอธิบายเกณฑ์</td></tr></tbody></table><div class=ck>CHECK: CHECK (((esi_level &gt;= 1) AND (esi_level &lt;= 5)))</div></details><details class="tcard" style="--mc:var(--mod-master)" open><summary><b>BED</b><span>ทะเบียนเตียงในห้องฉุกเฉิน</span><i>5 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสเตียง เช่น R1, N2, NT4, T12, 29</td></tr><tr><td class="c">2</td><td class="n">zone</td><td class="t">varchar(10)</td><td></td><td class="c">NN</td><td class="d">โซนเตียง: R / N / NT / T / GEN / TRIAGE / VVIP / OBS</td></tr><tr><td class="c">3</td><td class="n">zone_name</td><td class="t">varchar(60)</td><td></td><td class="c">NN</td><td class="d">ชื่อโซนที่แสดงบนผังเตียง</td></tr><tr><td class="c">4</td><td class="n">sort_no</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">ลำดับการแสดงผล</td></tr><tr><td class="c">5</td><td class="n">active</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">เปิดใช้งานเตียง (false = ปิดชั่วคราว)</td></tr></tbody></table><div class=ck>CHECK: CHECK (((zone)::text = ANY ((ARRAY[&#x27;R&#x27;::character varying, &#x27;N&#x27;::character varying, &#x27;NT&#x27;::character varying, &#x27;T&#x27;::character varying, &#x27;GEN&#x27;::character varying, &#x27;TRIAGE&#x27;::character varying, &#x27;VVIP&#x27;::character varying, &#x27;OBS&#x27;::character varying])::text[])))</div></details><details class="tcard" style="--mc:var(--mod-master)" open><summary><b>STATUS_MST</b><span>Master สถานะการรักษา (ข้อความที่แสดงบนจอ TV / tablet)</span><i>5 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">status_code</td><td class="t">varchar(20)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสสถานะ เช่น WAIT_LAB, OBSERVE, DISCHARGED</td></tr><tr><td class="c">2</td><td class="n">display_th</td><td class="t">varchar(80)</td><td></td><td class="c">NN</td><td class="d">ข้อความภาษาไทยที่แสดงผล</td></tr><tr><td class="c">3</td><td class="n">show_on_tv</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">แสดงบนจอ TV ญาติหรือไม่</td></tr><tr><td class="c">4</td><td class="n">is_final</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">สถานะสุดท้าย (จำหน่ายแล้ว) — เลือกเองไม่ได้ ใช้ผ่าน fn_discharge</td></tr><tr><td class="c">5</td><td class="n">sort_no</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">ลำดับการแสดงผล</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-master)" open><summary><b>DISPOSITION_MST</b><span>Master ผลการจำหน่าย (กลับบ้าน / Admit / ICU / CCU / Cath lab / Refer ฯลฯ)</span><i>3 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">disposition_code</td><td class="t">varchar(20)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสผลการจำหน่าย</td></tr><tr><td class="c">2</td><td class="n">display_th</td><td class="t">varchar(80)</td><td></td><td class="c">NN</td><td class="d">ข้อความภาษาไทย</td></tr><tr><td class="c">3</td><td class="n">sort_no</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">ลำดับการแสดงผล</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-master)" open><summary><b>SETTING</b><span>ค่าตั้งค่าระบบ (key-value) — แก้ไขผ่าน fn_setting_set และบันทึก audit</span><i>5 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">setting_key</td><td class="t">varchar(50)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">ชื่อค่าตั้งค่า เช่น hn_source, tv_mask_hn, bed_session_min</td></tr><tr><td class="c">2</td><td class="n">setting_value</td><td class="t">text</td><td></td><td class="c">NN</td><td class="d">ค่า (เก็บเป็นข้อความ)</td></tr><tr><td class="c">3</td><td class="n">description</td><td class="t">varchar(200)</td><td></td><td class="c"></td><td class="d">คำอธิบาย</td></tr><tr><td class="c">4</td><td class="n">updated_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาแก้ไขล่าสุด</td></tr><tr><td class="c">5</td><td class="n">updated_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้แก้ไขล่าสุด</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-master)" open><summary><b>DAILY_COUNTER</b><span>เลขรันรายวัน (visit_no, queue_no) — ปลอดภัยต่อการเรียกพร้อมกันด้วย UPSERT</span><i>3 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">counter_name</td><td class="t">varchar(20)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">ชื่อตัวนับ: VISIT / QUEUE</td></tr><tr><td class="c">2</td><td class="n">counter_date</td><td class="t">date</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">วันที่ของตัวนับ (เริ่มใหม่ทุกวัน)</td></tr><tr><td class="c">3</td><td class="n">last_value</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">เลขล่าสุดที่ออกไปแล้ว</td></tr></tbody></table></details></div>
+  </section>
+  <!-- ============ PATIENT & VISIT ============ -->
+  <section id="m02">
+    <div class="sec-head"><span class="sec-num">02</span><h2 style="color:var(--mod-sales)">Patient & Visit — ผู้ป่วย การมารับบริการ และคิว</h2></div>
+    <p class="sec-sub">ทะเบียนผู้ป่วย (HN) → visit → คัดกรอง ESI → เตียง → คิว → สายรัดข้อมือ / สแกนบาร์โค้ด</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+erDiagram
+  direction LR
+  BED ||--o{ BED_ASSIGNMENT : "bed_code"
+  VISIT ||--o{ BED_ASSIGNMENT : "visit_id"
+  VISIT |o--o{ HL7_ALARM : "visit_id"
+  PATIENT |o--o{ PATIENT : "merged_to_hn"
+  VISIT ||--o{ QUEUE : "visit_id"
+  ESI_LEVEL ||--o{ TRIAGE : "esi_level"
+  VISIT ||--o{ TRIAGE : "visit_id"
+  BED |o--o{ VISIT : "bed_code"
+  DISPOSITION_MST |o--o{ VISIT : "disposition_code"
+  ESI_LEVEL |o--o{ VISIT : "esi_level"
+  PATIENT ||--o{ VISIT : "patient_id"
+  STATUS_MST ||--o{ VISIT : "status_code"
+  STATUS_MST ||--o{ VISIT_STATUS_LOG : "status_code"
+  VISIT ||--o{ VISIT_STATUS_LOG : "visit_id"
+  PATIENT ||--o{ WRISTBAND : "patient_id"
+  VISIT |o--o{ WRISTBAND : "visit_id"
+  VISIT |o..o{ HL7_MESSAGE : "visit_id"
+  VISIT |o..o{ VITAL_SIGN : "visit_id"
+  VISIT |o..o{ VITAL_LATEST : "visit_id"
+  PATIENT |o..o{ SCAN_LOG : "patient_id"
+  VISIT |o..o{ BED_ACCESS_LOG : "visit_id"
+  PATIENT {
+    bigint patient_id PK "รหัสผู้ป่วยภายใน (surrogate key)"
+    varchar(20) hn UK "Hospital Number — ค่าในบาร์โค้ดสายรัดข้อมือ"
+    varchar(20) merged_to_hn FK "HN จริงที่รวมเข้าไปแล้ว (ใช้ redirect เมื่อสแกนเลขชั่วคราว)"
+    varchar(13) cid UK "เลขบัตรประชาชน 13 หลัก (ข้อมูลอ่อนไหว — แสดงแบบปกปิด)"
+  }
+  VISIT {
+    bigint visit_id PK "รหัส visit ภายใน"
+    varchar(20) visit_no UK "เลข visit รูปแบบ ERyyMMdd-nnnn (ปี พ.ศ. 2 หลัก)"
+    bigint patient_id FK, UK "ผู้ป่วย"
+    smallint esi_level FK "ระดับ ESI ปัจจุบัน (จากการคัดกรองล่าสุด)"
+    varchar(20) status_code FK "สถานะการรักษาปัจจุบัน"
+    varchar(20) bed_code FK, UK "เตียงปัจจุบัน"
+    varchar(20) disposition_code FK "ผลการจำหน่าย"
+  }
+  TRIAGE {
+    bigint triage_id PK "รหัสการคัดกรอง"
+    bigint visit_id FK "visit"
+    smallint esi_level FK "ระดับ ESI ที่ประเมิน"
+  }
+  VISIT_STATUS_LOG {
+    bigint log_id PK "รหัส log"
+    bigint visit_id FK "visit"
+    varchar(20) status_code FK "สถานะที่เปลี่ยนเป็น"
+  }
+  BED_ASSIGNMENT {
+    bigint assign_id PK "รหัสรายการ"
+    bigint visit_id FK "visit"
+    varchar(20) bed_code FK "เตียง"
+  }
+  QUEUE {
+    bigint queue_id PK "รหัสคิว"
+    bigint visit_id FK, UK "visit"
+    date queue_date UK "วันที่ของคิว"
+    integer queue_no UK "เลขคิวรายวัน"
+  }
+  WRISTBAND {
+    bigint wristband_id PK "รหัสสายรัด"
+    bigint patient_id FK "ผู้ป่วย"
+    bigint visit_id FK "visit ที่พิมพ์สายรัด"
+  }
+  SCAN_LOG {
+    bigint scan_id PK "รหัสรายการ"
+    bigint patient_id FK "ผู้ป่วยที่พบ"
+  }
+  BED {
+    varchar(20) bed_code PK "→ โมดูล 01 Master & Setting"
+  }
+  BED_ACCESS_LOG {
+    bigint log_id PK "→ โมดูล 04 Bed Tablet"
+  }
+  DISPOSITION_MST {
+    varchar(20) disposition_code PK "→ โมดูล 01 Master & Setting"
+  }
+  ESI_LEVEL {
+    smallint esi_level PK "→ โมดูล 01 Master & Setting"
+  }
+  HL7_ALARM {
+    bigint alarm_id PK "→ โมดูล 03 HL7 Interface"
+  }
+  HL7_MESSAGE {
+    bigint msg_id PK "→ โมดูล 03 HL7 Interface"
+  }
+  STATUS_MST {
+    varchar(20) status_code PK "→ โมดูล 01 Master & Setting"
+  }
+  VITAL_LATEST {
+    integer device_id PK "→ โมดูล 03 HL7 Interface"
+  }
+  VITAL_SIGN {
+    bigint vital_id PK "→ โมดูล 03 HL7 Interface"
+  }
+</pre>
+    </figure>
+    <figcaption>ผังแสดงเฉพาะคอลัมน์ที่เป็นคีย์ (PK / FK / UK) — คอลัมน์ทั้งหมดอยู่ในตารางด้านล่าง · เส้นทึบ = FK จริง · เส้นประ = logical reference · ตารางที่มีคีย์เดียวพร้อมลูกศร = อยู่ในโมดูลอื่น</figcaption>
+    <div class="refs"><b>อ้างอิงข้ามโมดูล:</b> BED_ACCESS_LOG.visit_id → VISIT · BED_ASSIGNMENT.bed_code → BED · HL7_ALARM.visit_id → VISIT · HL7_MESSAGE.visit_id → VISIT · TRIAGE.esi_level → ESI_LEVEL · VISIT.bed_code → BED · VISIT.disposition_code → DISPOSITION_MST · VISIT.esi_level → ESI_LEVEL · VISIT.status_code → STATUS_MST · VISIT_STATUS_LOG.status_code → STATUS_MST · VITAL_LATEST.visit_id → VISIT · VITAL_SIGN.visit_id → VISIT</div>
+    <div class="cards"><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>PATIENT</b><span>ทะเบียนผู้ป่วย — HN ห้ามซ้ำ, is_temp = เลข ER ชั่วคราว (ผู้ป่วยวิกฤตไม่ทราบชื่อ)</span><i>17 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">patient_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสผู้ป่วยภายใน (surrogate key)</td></tr><tr><td class="c">2</td><td class="n">hn</td><td class="t">varchar(20)</td><td><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">Hospital Number — ค่าในบาร์โค้ดสายรัดข้อมือ</td></tr><tr><td class="c">3</td><td class="n">is_temp</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">true = เลข ER ชั่วคราว (ER00001) รอรวมกับ HN จริง</td></tr><tr><td class="c">4</td><td class="n">merged_to_hn</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">HN จริงที่รวมเข้าไปแล้ว (ใช้ redirect เมื่อสแกนเลขชั่วคราว)<span class=ref>→ patient.hn</span></td></tr><tr><td class="c">5</td><td class="n">prefix</td><td class="t">varchar(20)</td><td></td><td class="c"></td><td class="d">คำนำหน้าชื่อ</td></tr><tr><td class="c">6</td><td class="n">first_name</td><td class="t">varchar(100)</td><td></td><td class="c">NN</td><td class="d">ชื่อ</td></tr><tr><td class="c">7</td><td class="n">last_name</td><td class="t">varchar(100)</td><td></td><td class="c"></td><td class="d">นามสกุล</td></tr><tr><td class="c">8</td><td class="n">gender</td><td class="t">char(1)</td><td></td><td class="c">NN</td><td class="d">เพศ M / F / U</td></tr><tr><td class="c">9</td><td class="n">birth_date</td><td class="t">date</td><td></td><td class="c"></td><td class="d">วันเกิด (ค.ศ.)</td></tr><tr><td class="c">10</td><td class="n">cid</td><td class="t">varchar(13)</td><td><span class="k k-UK">UK</span></td><td class="c"></td><td class="d">เลขบัตรประชาชน 13 หลัก (ข้อมูลอ่อนไหว — แสดงแบบปกปิด)</td></tr><tr><td class="c">11</td><td class="n">phone</td><td class="t">varchar(30)</td><td></td><td class="c"></td><td class="d">เบอร์โทรศัพท์</td></tr><tr><td class="c">12</td><td class="n">allergy_note</td><td class="t">varchar(500)</td><td></td><td class="c"></td><td class="d">ประวัติแพ้ยา / แพ้อาหาร (แสดงเตือนทุกหน้าจอ และบนสายรัดข้อมือ)</td></tr><tr><td class="c">13</td><td class="n">underlying</td><td class="t">varchar(500)</td><td></td><td class="c"></td><td class="d">โรคประจำตัว</td></tr><tr><td class="c">14</td><td class="n">created_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาลงทะเบียน</td></tr><tr><td class="c">15</td><td class="n">created_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้ลงทะเบียน</td></tr><tr><td class="c">16</td><td class="n">updated_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาแก้ไขล่าสุด (trigger touch_patient)</td></tr><tr><td class="c">17</td><td class="n">updated_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้แก้ไขล่าสุด</td></tr></tbody></table><div class=ck>CHECK: CHECK (((cid IS NULL) OR ((cid)::text ~ &#x27;^[0-9]{13}$&#x27;::text))) · CHECK ((gender = ANY (ARRAY[&#x27;M&#x27;::bpchar, &#x27;F&#x27;::bpchar, &#x27;U&#x27;::bpchar])))</div></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>VISIT</b><span>การมารับบริการ ER แต่ละครั้ง — ผู้ป่วย 1 คนมี visit เปิดได้ 1 รายการ, เตียง 1 เตียงมีผู้ป่วยได้ 1 คน</span><i>21 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัส visit ภายใน</td></tr><tr><td class="c">2</td><td class="n">visit_no</td><td class="t">varchar(20)</td><td><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">เลข visit รูปแบบ ERyyMMdd-nnnn (ปี พ.ศ. 2 หลัก)</td></tr><tr><td class="c">3</td><td class="n">patient_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">ผู้ป่วย<span class=ref>→ patient.patient_id</span></td></tr><tr><td class="c">4</td><td class="n">arrival_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลามาถึง ER</td></tr><tr><td class="c">5</td><td class="n">crisis_flag</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">ผู้ป่วยวิกฤต (fast track)</td></tr><tr><td class="c">6</td><td class="n">arrival_mode</td><td class="t">varchar(20)</td><td></td><td class="c"></td><td class="d">วิธีมาถึง: WALK_IN / AMBULANCE / REFER_IN / EMS / OTHER</td></tr><tr><td class="c">7</td><td class="n">chief_complaint</td><td class="t">varchar(500)</td><td></td><td class="c"></td><td class="d">อาการสำคัญ</td></tr><tr><td class="c">8</td><td class="n">esi_level</td><td class="t">smallint</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">ระดับ ESI ปัจจุบัน (จากการคัดกรองล่าสุด)<span class=ref>→ esi_level.esi_level</span></td></tr><tr><td class="c">9</td><td class="n">triage_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาคัดกรองล่าสุด</td></tr><tr><td class="c">10</td><td class="n">triage_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้คัดกรองล่าสุด</td></tr><tr><td class="c">11</td><td class="n">status_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">สถานะการรักษาปัจจุบัน<span class=ref>→ status_mst.status_code</span></td></tr><tr><td class="c">12</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span><span class="k k-UK">UK</span></td><td class="c"></td><td class="d">เตียงปัจจุบัน<span class=ref>→ bed.bed_code</span></td></tr><tr><td class="c">13</td><td class="n">doctor_name</td><td class="t">varchar(120)</td><td></td><td class="c"></td><td class="d">แพทย์ผู้ตรวจ</td></tr><tr><td class="c">14</td><td class="n">doctor_seen_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาที่แพทย์เริ่มตรวจ (ใช้คำนวณ Door-to-Doctor)</td></tr><tr><td class="c">15</td><td class="n">diagnosis</td><td class="t">varchar(500)</td><td></td><td class="c"></td><td class="d">การวินิจฉัย</td></tr><tr><td class="c">16</td><td class="n">disposition_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">ผลการจำหน่าย<span class=ref>→ disposition_mst.disposition_code</span></td></tr><tr><td class="c">17</td><td class="n">discharge_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาจำหน่าย (NULL = ยังอยู่ใน ER)</td></tr><tr><td class="c">18</td><td class="n">note</td><td class="t">text</td><td></td><td class="c"></td><td class="d">หมายเหตุ</td></tr><tr><td class="c">19</td><td class="n">created_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้เปิด visit</td></tr><tr><td class="c">20</td><td class="n">updated_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาแก้ไขล่าสุด</td></tr><tr><td class="c">21</td><td class="n">updated_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้แก้ไขล่าสุด</td></tr></tbody></table><div class=ck>CHECK: CHECK (((arrival_mode)::text = ANY ((ARRAY[&#x27;WALK_IN&#x27;::character varying, &#x27;AMBULANCE&#x27;::character varying, &#x27;REFER_IN&#x27;::character varying, &#x27;EMS&#x27;::character varying, &#x27;OTHER&#x27;::character varying])::text[])))</div></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>TRIAGE</b><span>ประวัติการคัดกรอง / ประเมิน ESI ซ้ำ พร้อมสัญญาณชีพ ณ เวลาคัดกรอง</span><i>14 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">triage_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสการคัดกรอง</td></tr><tr><td class="c">2</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">visit<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">3</td><td class="n">esi_level</td><td class="t">smallint</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">ระดับ ESI ที่ประเมิน<span class=ref>→ esi_level.esi_level</span></td></tr><tr><td class="c">4</td><td class="n">bp_sys</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">ความดันตัวบน (mmHg)</td></tr><tr><td class="c">5</td><td class="n">bp_dia</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">ความดันตัวล่าง (mmHg)</td></tr><tr><td class="c">6</td><td class="n">pulse</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">ชีพจร (ครั้ง/นาที)</td></tr><tr><td class="c">7</td><td class="n">resp_rate</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">อัตราการหายใจ (ครั้ง/นาที)</td></tr><tr><td class="c">8</td><td class="n">temp_c</td><td class="t">numeric(4,1)</td><td></td><td class="c"></td><td class="d">อุณหภูมิ (°C)</td></tr><tr><td class="c">9</td><td class="n">spo2</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">ความอิ่มตัวออกซิเจน (%)</td></tr><tr><td class="c">10</td><td class="n">pain_score</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">คะแนนความปวด 0–10</td></tr><tr><td class="c">11</td><td class="n">gcs</td><td class="t">smallint</td><td></td><td class="c"></td><td class="d">Glasgow Coma Scale 3–15</td></tr><tr><td class="c">12</td><td class="n">note</td><td class="t">varchar(500)</td><td></td><td class="c"></td><td class="d">หมายเหตุการคัดกรอง</td></tr><tr><td class="c">13</td><td class="n">triaged_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาคัดกรอง</td></tr><tr><td class="c">14</td><td class="n">triaged_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้คัดกรอง</td></tr></tbody></table><div class=ck>CHECK: CHECK (((gcs &gt;= 3) AND (gcs &lt;= 15))) · CHECK (((pain_score &gt;= 0) AND (pain_score &lt;= 10)))</div></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>VISIT_STATUS_LOG</b><span>ประวัติการเปลี่ยนสถานะของ visit (timeline บน tablet)</span><i>5 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">log_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัส log</td></tr><tr><td class="c">2</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">visit<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">3</td><td class="n">status_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">สถานะที่เปลี่ยนเป็น<span class=ref>→ status_mst.status_code</span></td></tr><tr><td class="c">4</td><td class="n">changed_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาเปลี่ยน</td></tr><tr><td class="c">5</td><td class="n">changed_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้เปลี่ยน</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>BED_ASSIGNMENT</b><span>ประวัติการเข้า-ออกเตียงของ visit</span><i>6 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">assign_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสรายการ</td></tr><tr><td class="c">2</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">visit<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">3</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">เตียง<span class=ref>→ bed.bed_code</span></td></tr><tr><td class="c">4</td><td class="n">in_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาเข้าเตียง</td></tr><tr><td class="c">5</td><td class="n">out_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาออกจากเตียง (NULL = ยังอยู่)</td></tr><tr><td class="c">6</td><td class="n">assigned_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้จัดเตียง</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>QUEUE</b><span>คิวเรียกผู้ป่วย — 1 visit มีคิวที่ยังเปิด (WAIT/CALLED) ได้ 1 รายการ</span><i>11 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">queue_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสคิว</td></tr><tr><td class="c">2</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">visit<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">3</td><td class="n">queue_date</td><td class="t">date</td><td><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">วันที่ของคิว</td></tr><tr><td class="c">4</td><td class="n">queue_no</td><td class="t">integer</td><td><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">เลขคิวรายวัน</td></tr><tr><td class="c">5</td><td class="n">state</td><td class="t">varchar(10)</td><td></td><td class="c">NN</td><td class="d">สถานะคิว: WAIT / CALLED / DONE / CANCEL</td></tr><tr><td class="c">6</td><td class="n">created_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาเข้าคิว</td></tr><tr><td class="c">7</td><td class="n">called_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาเรียกล่าสุด</td></tr><tr><td class="c">8</td><td class="n">called_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้เรียก</td></tr><tr><td class="c">9</td><td class="n">recall_count</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">จำนวนครั้งที่เรียกซ้ำ</td></tr><tr><td class="c">10</td><td class="n">done_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาเสร็จ / ยกเลิก</td></tr><tr><td class="c">11</td><td class="n">cancel_reason</td><td class="t">varchar(200)</td><td></td><td class="c"></td><td class="d">เหตุผลการยกเลิก (บังคับกรอก)</td></tr></tbody></table><div class=ck>CHECK: CHECK (((state)::text = ANY ((ARRAY[&#x27;WAIT&#x27;::character varying, &#x27;CALLED&#x27;::character varying, &#x27;DONE&#x27;::character varying, &#x27;CANCEL&#x27;::character varying])::text[])))</div></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>WRISTBAND</b><span>สายรัดข้อมือ — barcode_value ใช้ค้นหาเมื่อสแกน (ค่าเริ่มต้น = HN)</span><i>9 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">wristband_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสสายรัด</td></tr><tr><td class="c">2</td><td class="n">patient_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">ผู้ป่วย<span class=ref>→ patient.patient_id</span></td></tr><tr><td class="c">3</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">visit ที่พิมพ์สายรัด<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">4</td><td class="n">barcode_value</td><td class="t">varchar(40)</td><td></td><td class="c">NN</td><td class="d">ค่าที่อยู่ในบาร์โค้ด</td></tr><tr><td class="c">5</td><td class="n">symbology</td><td class="t">varchar(20)</td><td></td><td class="c">NN</td><td class="d">ชนิดบาร์โค้ด (CODE39)</td></tr><tr><td class="c">6</td><td class="n">printed_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาพิมพ์ล่าสุด</td></tr><tr><td class="c">7</td><td class="n">printed_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้พิมพ์ล่าสุด</td></tr><tr><td class="c">8</td><td class="n">print_count</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">จำนวนครั้งที่พิมพ์ (พิมพ์ซ้ำ +1)</td></tr><tr><td class="c">9</td><td class="n">active</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">ใช้งานอยู่ (สายรัดเก่าถูกปิดเมื่อเปิด visit ใหม่/รวม HN)</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-sales)" open><summary><b>SCAN_LOG</b><span>บันทึกการสแกนบาร์โค้ดทุกครั้ง (ตรวจสอบย้อนหลัง / สถิติ)</span><i>8 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">scan_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสรายการ</td></tr><tr><td class="c">2</td><td class="n">scanned_code</td><td class="t">varchar(80)</td><td></td><td class="c">NN</td><td class="d">ค่าดิบที่สแกนได้</td></tr><tr><td class="c">3</td><td class="n">normalized</td><td class="t">varchar(80)</td><td></td><td class="c"></td><td class="d">ค่าหลังแปลง (ตัด *, แปลงอักษรไทยเป็นตัวเลข)</td></tr><tr><td class="c">4</td><td class="n">result</td><td class="t">varchar(20)</td><td></td><td class="c">NN</td><td class="d">ผล: FOUND / NOT_FOUND / MERGED</td></tr><tr><td class="c">5</td><td class="n">patient_id</td><td class="t">bigint</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">ผู้ป่วยที่พบ<span class=ref>→ patient.patient_id</span></td></tr><tr><td class="c">6</td><td class="n">scanned_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาสแกน</td></tr><tr><td class="c">7</td><td class="n">scanned_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้สแกน</td></tr><tr><td class="c">8</td><td class="n">client_ip</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP เครื่องที่สแกน</td></tr></tbody></table></details></div>
+  </section>
+  <!-- ============ HL7 INTERFACE ============ -->
+  <section id="m03">
+    <div class="sec-head"><span class="sec-num">03</span><h2 style="color:var(--mod-purchase)">HL7 Interface — เครื่อง Monitor และสัญญาณชีพ</h2></div>
+    <p class="sec-sub">Northern patient monitor (HL7 v2.6 ORU^R01 / ORU^R40) → ค่าล่าสุด / ประวัติสัญญาณชีพ / alarm</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+erDiagram
+  direction LR
+  HL7_DEVICE |o--o{ HL7_ALARM : "device_id"
+  VISIT |o--o{ HL7_ALARM : "visit_id"
+  BED |o--o{ HL7_DEVICE : "bed_code"
+  HL7_DEVICE ||--o{ VITAL_LATEST : "device_id"
+  HL7_DEVICE |o..o{ HL7_MESSAGE : "device_id"
+  VISIT |o..o{ HL7_MESSAGE : "visit_id"
+  VISIT |o..o{ VITAL_SIGN : "visit_id"
+  HL7_DEVICE |o..o{ VITAL_SIGN : "device_id"
+  HL7_OBS_CODE |o..o{ VITAL_SIGN : "obs_code"
+  VISIT |o..o{ VITAL_LATEST : "visit_id"
+  HL7_OBS_CODE |o..o{ VITAL_LATEST : "obs_code"
+  HL7_OBS_CODE |o..o{ HL7_ALARM : "obs_code"
+  HL7_DEVICE {
+    integer device_id PK "รหัสเครื่อง"
+    varchar(80) device_key UK "ตัวระบุเครื่อง (IP ของเครื่อง — ต้องเป็น IP คงที่)"
+    varchar(20) bed_code FK "เตียงที่ผูกกับเครื่อง (ใช้จับคู่ผู้ป่วยเมื่อไม่มี PID-3)"
+  }
+  HL7_OBS_CODE {
+    varchar(40) obs_code PK "รหัส MDC (OBX-3.1) เช่น 147842"
+  }
+  HL7_MESSAGE {
+    bigint msg_id PK "รหัสข้อความ (identity)"
+    timestamptz received_at PK "เวลารับข้อความ (partition key)"
+    integer device_id FK "เครื่อง (logical ref → hl7_device)"
+    bigint visit_id FK "visit ที่จับคู่ได้ (logical ref → visit)"
+  }
+  VITAL_LATEST {
+    integer device_id PK, FK "เครื่อง"
+    varchar(40) obs_code PK, FK "รหัส MDC"
+    varchar(40) channel_id PK "OBX-4 channel"
+    bigint visit_id FK "visit ที่จับคู่ได้ (NULL = ไม่พบ)"
+  }
+  VITAL_SIGN {
+    bigint vital_id PK "รหัสรายการ (identity)"
+    timestamptz observed_at PK "เวลาวัด (partition key)"
+    bigint visit_id FK "visit (logical ref → visit)"
+    integer device_id FK "เครื่อง (logical ref → hl7_device)"
+    varchar(40) obs_code FK "รหัส MDC (logical ref → hl7_obs_code)"
+  }
+  HL7_ALARM {
+    bigint alarm_id PK "รหัส alarm"
+    integer device_id FK "เครื่อง"
+    bigint visit_id FK "visit"
+    varchar(40) obs_code FK "รหัส MDC ของค่าที่เกิด alarm"
+  }
+  BED {
+    varchar(20) bed_code PK "→ โมดูล 01 Master & Setting"
+  }
+  VISIT {
+    bigint visit_id PK "→ โมดูล 02 Patient & Visit"
+  }
+</pre>
+    </figure>
+    <figcaption>ผังแสดงเฉพาะคอลัมน์ที่เป็นคีย์ (PK / FK / UK) — คอลัมน์ทั้งหมดอยู่ในตารางด้านล่าง · เส้นทึบ = FK จริง · เส้นประ = logical reference · ตารางที่มีคีย์เดียวพร้อมลูกศร = อยู่ในโมดูลอื่น</figcaption>
+    <div class="refs"><b>อ้างอิงข้ามโมดูล:</b> HL7_ALARM.visit_id → VISIT · HL7_DEVICE.bed_code → BED · HL7_MESSAGE.visit_id → VISIT · VITAL_LATEST.visit_id → VISIT · VITAL_SIGN.visit_id → VISIT</div>
+    <div class="cards"><details class="tcard" style="--mc:var(--mod-purchase)" open><summary><b>HL7_DEVICE</b><span>เครื่อง patient monitor (Northern) — เพิ่มอัตโนมัติเมื่อส่งข้อความแรก, device_key = IP</span><i>10 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">device_id</td><td class="t">integer</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสเครื่อง</td></tr><tr><td class="c">2</td><td class="n">device_key</td><td class="t">varchar(80)</td><td><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">ตัวระบุเครื่อง (IP ของเครื่อง — ต้องเป็น IP คงที่)</td></tr><tr><td class="c">3</td><td class="n">device_name</td><td class="t">varchar(100)</td><td></td><td class="c"></td><td class="d">ชื่อเครื่อง</td></tr><tr><td class="c">4</td><td class="n">ip_address</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP ของเครื่อง</td></tr><tr><td class="c">5</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">เตียงที่ผูกกับเครื่อง (ใช้จับคู่ผู้ป่วยเมื่อไม่มี PID-3)<span class=ref>→ bed.bed_code</span></td></tr><tr><td class="c">6</td><td class="n">last_seen_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลารับข้อความล่าสุด</td></tr><tr><td class="c">7</td><td class="n">last_msg_type</td><td class="t">varchar(20)</td><td></td><td class="c"></td><td class="d">ชนิดข้อความล่าสุด ORU^R01 / ORU^R40</td></tr><tr><td class="c">8</td><td class="n">msg_count</td><td class="t">bigint</td><td></td><td class="c">NN</td><td class="d">จำนวนข้อความสะสม</td></tr><tr><td class="c">9</td><td class="n">active</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">เปิดใช้งาน</td></tr><tr><td class="c">10</td><td class="n">created_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาที่พบเครื่องครั้งแรก</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-purchase)" open><summary><b>HL7_OBS_CODE</b><span>Mapping รหัส MDC (OBX-3) → ชื่อย่อ / หน่วยที่แสดงผล</span><i>7 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">obs_code</td><td class="t">varchar(40)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัส MDC (OBX-3.1) เช่น 147842</td></tr><tr><td class="c">2</td><td class="n">mdc_name</td><td class="t">varchar(80)</td><td></td><td class="c">NN</td><td class="d">ชื่อ MDC (OBX-3.2) เช่น MDC_ECG_HEART_RATE</td></tr><tr><td class="c">3</td><td class="n">short_name</td><td class="t">varchar(20)</td><td></td><td class="c">NN</td><td class="d">ชื่อย่อ HR / SpO2 / RR / SYS …</td></tr><tr><td class="c">4</td><td class="n">display_th</td><td class="t">varchar(80)</td><td></td><td class="c"></td><td class="d">ชื่อภาษาไทย</td></tr><tr><td class="c">5</td><td class="n">unit_display</td><td class="t">varchar(20)</td><td></td><td class="c"></td><td class="d">หน่วยที่แสดงผล</td></tr><tr><td class="c">6</td><td class="n">sort_no</td><td class="t">integer</td><td></td><td class="c">NN</td><td class="d">ลำดับการแสดงผล</td></tr><tr><td class="c">7</td><td class="n">show_on_board</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">แสดงบนหน้าจอหรือไม่ (รหัสใหม่ที่ไม่รู้จักจะถูกเพิ่มเป็น false)</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-purchase)" open><summary><b>HL7_MESSAGE</b><span>ข้อความ HL7 ดิบ — partition รายเดือน, เก็บตาม setting hl7_store_raw (ค่าเริ่มต้นเฉพาะ ERROR / NO_VISIT / Alarm)</span><i>14 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">msg_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสข้อความ (identity)</td></tr><tr><td class="c">2</td><td class="n">received_at</td><td class="t">timestamptz</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">เวลารับข้อความ (partition key)</td></tr><tr><td class="c">3</td><td class="n">remote_ip</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP ต้นทาง</td></tr><tr><td class="c">4</td><td class="n">device_id</td><td class="t">integer</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">เครื่อง (logical ref → hl7_device)<span class=ref>→ hl7_device.device_id</span></td></tr><tr><td class="c">5</td><td class="n">msg_type</td><td class="t">varchar(30)</td><td></td><td class="c"></td><td class="d">MSH-9 เช่น ORU^R01</td></tr><tr><td class="c">6</td><td class="n">control_id</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">MSH-10 Control ID</td></tr><tr><td class="c">7</td><td class="n">patient_mrn</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">PID-3 เลขเวชระเบียนที่กรอกที่เครื่อง</td></tr><tr><td class="c">8</td><td class="n">bed_text</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">PV1-3 ค่าเตียงจากเครื่อง</td></tr><tr><td class="c">9</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">visit ที่จับคู่ได้ (logical ref → visit)<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">10</td><td class="n">obx_count</td><td class="t">integer</td><td></td><td class="c"></td><td class="d">จำนวน OBX segment</td></tr><tr><td class="c">11</td><td class="n">parse_status</td><td class="t">varchar(10)</td><td></td><td class="c">NN</td><td class="d">ผลการ parse: OK / NO_VISIT / ERROR</td></tr><tr><td class="c">12</td><td class="n">error_text</td><td class="t">varchar(500)</td><td></td><td class="c"></td><td class="d">ข้อความ error</td></tr><tr><td class="c">13</td><td class="n">ack_code</td><td class="t">varchar(4)</td><td></td><td class="c"></td><td class="d">ACK ที่ตอบกลับ AA / AE</td></tr><tr><td class="c">14</td><td class="n">raw_text</td><td class="t">text</td><td></td><td class="c"></td><td class="d">ข้อความดิบ (สูงสุด 20,000 ตัวอักษร)</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-purchase)" open><summary><b>VITAL_LATEST</b><span>ค่าสัญญาณชีพล่าสุดต่อเครื่อง/รหัส/channel — UPSERT ทุกข้อความ (ทุก 1 วินาที)</span><i>10 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">device_id</td><td class="t">integer</td><td><span class="k k-PK">PK</span><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">เครื่อง<span class=ref>→ hl7_device.device_id</span></td></tr><tr><td class="c">2</td><td class="n">obs_code</td><td class="t">varchar(40)</td><td><span class="k k-PK">PK</span><span class="k k-FKs">FK*</span></td><td class="c">NN</td><td class="d">รหัส MDC<span class=ref>→ hl7_obs_code.obs_code</span></td></tr><tr><td class="c">3</td><td class="n">channel_id</td><td class="t">varchar(40)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">OBX-4 channel</td></tr><tr><td class="c">4</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">visit ที่จับคู่ได้ (NULL = ไม่พบ)<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">5</td><td class="n">patient_mrn</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">PID-3 จากเครื่อง</td></tr><tr><td class="c">6</td><td class="n">value_num</td><td class="t">numeric(12,3)</td><td></td><td class="c"></td><td class="d">ค่าตัวเลขล่าสุด</td></tr><tr><td class="c">7</td><td class="n">value_text</td><td class="t">varchar(100)</td><td></td><td class="c"></td><td class="d">ค่าข้อความล่าสุด</td></tr><tr><td class="c">8</td><td class="n">unit_code</td><td class="t">varchar(80)</td><td></td><td class="c"></td><td class="d">หน่วย</td></tr><tr><td class="c">9</td><td class="n">observed_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาของค่าล่าสุด</td></tr><tr><td class="c">10</td><td class="n">last_stored_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาที่เขียนลง vital_sign ครั้งล่าสุด (ใช้คุมรอบบันทึก)</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-purchase)" open><summary><b>VITAL_SIGN</b><span>ประวัติสัญญาณชีพ — บันทึกทุก hl7_store_interval_sec วินาที, partition รายเดือน</span><i>12 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">vital_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสรายการ (identity)</td></tr><tr><td class="c">2</td><td class="n">observed_at</td><td class="t">timestamptz</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">เวลาวัด (partition key)</td></tr><tr><td class="c">3</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">visit (logical ref → visit)<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">4</td><td class="n">patient_mrn</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">PID-3 จากเครื่อง</td></tr><tr><td class="c">5</td><td class="n">device_id</td><td class="t">integer</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">เครื่อง (logical ref → hl7_device)<span class=ref>→ hl7_device.device_id</span></td></tr><tr><td class="c">6</td><td class="n">obs_code</td><td class="t">varchar(40)</td><td><span class="k k-FKs">FK*</span></td><td class="c">NN</td><td class="d">รหัส MDC (logical ref → hl7_obs_code)<span class=ref>→ hl7_obs_code.obs_code</span></td></tr><tr><td class="c">7</td><td class="n">channel_id</td><td class="t">varchar(40)</td><td></td><td class="c"></td><td class="d">OBX-4 channel เช่น 1.2.1 = Temp ช่อง 1</td></tr><tr><td class="c">8</td><td class="n">value_num</td><td class="t">numeric(12,3)</td><td></td><td class="c"></td><td class="d">ค่าตัวเลข</td></tr><tr><td class="c">9</td><td class="n">value_text</td><td class="t">varchar(100)</td><td></td><td class="c"></td><td class="d">ค่าข้อความ (กรณีไม่ใช่ตัวเลข)</td></tr><tr><td class="c">10</td><td class="n">unit_code</td><td class="t">varchar(80)</td><td></td><td class="c"></td><td class="d">หน่วยตาม MDC เช่น MDC_DIM_BEAT_PER_MIN</td></tr><tr><td class="c">11</td><td class="n">alarm_range</td><td class="t">varchar(40)</td><td></td><td class="c"></td><td class="d">ช่วง alarm (OBX-7)</td></tr><tr><td class="c">12</td><td class="n">source</td><td class="t">varchar(10)</td><td></td><td class="c">NN</td><td class="d">แหล่งข้อมูล: HL7 / MANUAL</td></tr></tbody></table><div class=ck>CHECK: CHECK (((source)::text = ANY ((ARRAY[&#x27;HL7&#x27;::character varying, &#x27;MANUAL&#x27;::character varying])::text[])))</div></details><details class="tcard" style="--mc:var(--mod-purchase)" open><summary><b>HL7_ALARM</b><span>Alarm จากเครื่อง monitor (ORU^R40)</span><i>13 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">alarm_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัส alarm</td></tr><tr><td class="c">2</td><td class="n">received_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลารับ</td></tr><tr><td class="c">3</td><td class="n">device_id</td><td class="t">integer</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">เครื่อง<span class=ref>→ hl7_device.device_id</span></td></tr><tr><td class="c">4</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">visit<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">5</td><td class="n">patient_mrn</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">PID-3 / HN</td></tr><tr><td class="c">6</td><td class="n">event_code</td><td class="t">varchar(80)</td><td></td><td class="c"></td><td class="d">รหัสเหตุการณ์ เช่น 196670^MDC_EVT_LO</td></tr><tr><td class="c">7</td><td class="n">alarm_text</td><td class="t">varchar(200)</td><td></td><td class="c"></td><td class="d">ข้อความ alarm เช่น HR Too Low</td></tr><tr><td class="c">8</td><td class="n">alarm_flags</td><td class="t">varchar(40)</td><td></td><td class="c"></td><td class="d">OBX-8 flag เช่น H~PL~SP</td></tr><tr><td class="c">9</td><td class="n">obs_code</td><td class="t">varchar(40)</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">รหัส MDC ของค่าที่เกิด alarm<span class=ref>→ hl7_obs_code.obs_code</span></td></tr><tr><td class="c">10</td><td class="n">obs_value</td><td class="t">varchar(40)</td><td></td><td class="c"></td><td class="d">ค่าที่เกิด alarm</td></tr><tr><td class="c">11</td><td class="n">alarm_range</td><td class="t">varchar(40)</td><td></td><td class="c"></td><td class="d">ช่วงปกติ (OBX-7) เช่น 80-120</td></tr><tr><td class="c">12</td><td class="n">ack_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลารับทราบ</td></tr><tr><td class="c">13</td><td class="n">ack_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้รับทราบ</td></tr></tbody></table></details></div>
+  </section>
+  <!-- ============ BED TABLET ============ -->
+  <section id="m04">
+    <div class="sec-head"><span class="sec-num">04</span><h2 style="color:var(--mod-gl)">Bed Tablet — Tablet ประจำเตียง</h2></div>
+    <p class="sec-sub">Tablet 1 เครื่อง : 1 เตียง — จับคู่ด้วยรหัสใช้ครั้งเดียว, session ผูกเตียง, บันทึกการเปิดดู</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+erDiagram
+  direction LR
+  BED_TERMINAL |o--o{ APP_SESSION : "terminal_id"
+  BED ||--o{ BED_TERMINAL : "bed_code"
+  BED_TERMINAL ||--o{ BED_TERMINAL_PAIRING : "terminal_id"
+  BED_TERMINAL |o..o{ BED_ACCESS_LOG : "terminal_id"
+  VISIT |o..o{ BED_ACCESS_LOG : "visit_id"
+  BED_TERMINAL {
+    integer terminal_id PK "รหัส tablet"
+    varchar(20) bed_code FK, UK "เตียงที่ผูก (tablet ดูได้เฉพาะเตียงนี้)"
+    char(64) token_hash UK "SHA-256 ของ device token (NULL = รอจับคู่)"
+  }
+  BED_TERMINAL_PAIRING {
+    integer pairing_id PK "รหัสรายการ"
+    integer terminal_id FK "tablet"
+  }
+  BED_ACCESS_LOG {
+    bigint log_id PK "รหัสรายการ"
+    integer terminal_id FK "tablet (logical ref → bed_terminal)"
+    bigint visit_id FK "visit ที่ถูกเปิดดู"
+  }
+  APP_SESSION {
+    char(64) token PK "→ โมดูล 05 Security & Audit"
+  }
+  BED {
+    varchar(20) bed_code PK "→ โมดูล 01 Master & Setting"
+  }
+  VISIT {
+    bigint visit_id PK "→ โมดูล 02 Patient & Visit"
+  }
+</pre>
+    </figure>
+    <figcaption>ผังแสดงเฉพาะคอลัมน์ที่เป็นคีย์ (PK / FK / UK) — คอลัมน์ทั้งหมดอยู่ในตารางด้านล่าง · เส้นทึบ = FK จริง · เส้นประ = logical reference · ตารางที่มีคีย์เดียวพร้อมลูกศร = อยู่ในโมดูลอื่น</figcaption>
+    <div class="refs"><b>อ้างอิงข้ามโมดูล:</b> APP_SESSION.terminal_id → BED_TERMINAL · BED_ACCESS_LOG.visit_id → VISIT · BED_TERMINAL.bed_code → BED</div>
+    <div class="cards"><details class="tcard" style="--mc:var(--mod-gl)" open><summary><b>BED_TERMINAL</b><span>Tablet ประจำเตียง — 1 เตียงมี tablet active ได้ 1 เครื่อง</span><i>14 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">terminal_id</td><td class="t">integer</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัส tablet</td></tr><tr><td class="c">2</td><td class="n">terminal_name</td><td class="t">varchar(80)</td><td></td><td class="c">NN</td><td class="d">ชื่อเครื่อง</td></tr><tr><td class="c">3</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td><span class="k k-FK">FK</span><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">เตียงที่ผูก (tablet ดูได้เฉพาะเตียงนี้)<span class=ref>→ bed.bed_code</span></td></tr><tr><td class="c">4</td><td class="n">token_hash</td><td class="t">char(64)</td><td><span class="k k-UK">UK</span></td><td class="c"></td><td class="d">SHA-256 ของ device token (NULL = รอจับคู่)</td></tr><tr><td class="c">5</td><td class="n">paired_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาจับคู่</td></tr><tr><td class="c">6</td><td class="n">paired_ip</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP ตอนจับคู่</td></tr><tr><td class="c">7</td><td class="n">user_agent</td><td class="t">varchar(300)</td><td></td><td class="c"></td><td class="d">Browser / อุปกรณ์ตอนจับคู่</td></tr><tr><td class="c">8</td><td class="n">last_seen_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาติดต่อล่าสุด</td></tr><tr><td class="c">9</td><td class="n">last_ip</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP ล่าสุด</td></tr><tr><td class="c">10</td><td class="n">active</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">ใช้งานอยู่ (false = ยกเลิกแล้ว)</td></tr><tr><td class="c">11</td><td class="n">created_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาสร้าง</td></tr><tr><td class="c">12</td><td class="n">created_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้สร้าง (Admin)</td></tr><tr><td class="c">13</td><td class="n">revoked_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลายกเลิก</td></tr><tr><td class="c">14</td><td class="n">revoked_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้ยกเลิก</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-gl)" open><summary><b>BED_TERMINAL_PAIRING</b><span>รหัสจับคู่ tablet (ใช้ครั้งเดียว มีอายุ)</span><i>6 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">pairing_id</td><td class="t">integer</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสรายการ</td></tr><tr><td class="c">2</td><td class="n">terminal_id</td><td class="t">integer</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">tablet<span class=ref>→ bed_terminal.terminal_id</span></td></tr><tr><td class="c">3</td><td class="n">code_hash</td><td class="t">char(64)</td><td></td><td class="c">NN</td><td class="d">SHA-256 ของรหัสจับคู่</td></tr><tr><td class="c">4</td><td class="n">expires_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาหมดอายุ</td></tr><tr><td class="c">5</td><td class="n">used_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เวลาที่ใช้ / ยกเลิก</td></tr><tr><td class="c">6</td><td class="n">created_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้สร้างรหัส</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-gl)" open><summary><b>BED_ACCESS_LOG</b><span>บันทึกการใช้งาน tablet: PAIRED / LOGIN / VIEW / STATUS / ACK / DENIED / LOGOUT</span><i>9 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">log_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสรายการ</td></tr><tr><td class="c">2</td><td class="n">terminal_id</td><td class="t">integer</td><td><span class="k k-FKs">FK*</span></td><td class="c">NN</td><td class="d">tablet (logical ref → bed_terminal)<span class=ref>→ bed_terminal.terminal_id</span></td></tr><tr><td class="c">3</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td></td><td class="c">NN</td><td class="d">เตียง</td></tr><tr><td class="c">4</td><td class="n">visit_id</td><td class="t">bigint</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">visit ที่ถูกเปิดดู<span class=ref>→ visit.visit_id</span></td></tr><tr><td class="c">5</td><td class="n">username</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้ใช้</td></tr><tr><td class="c">6</td><td class="n">action</td><td class="t">varchar(20)</td><td></td><td class="c">NN</td><td class="d">การกระทำ</td></tr><tr><td class="c">7</td><td class="n">detail</td><td class="t">varchar(200)</td><td></td><td class="c"></td><td class="d">รายละเอียด เช่น สถานะที่เปลี่ยน</td></tr><tr><td class="c">8</td><td class="n">at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลา</td></tr><tr><td class="c">9</td><td class="n">client_ip</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP</td></tr></tbody></table></details></div>
+  </section>
+  <!-- ============ SECURITY & AUDIT ============ -->
+  <section id="m05">
+    <div class="sec-head"><span class="sec-num">05</span><h2 style="color:var(--mod-tax)">Security & Audit — ผู้ใช้ Session และ Audit</h2></div>
+    <p class="sec-sub">ผู้ใช้ / บทบาท / session (รวม session ของ tablet) / audit trail</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+erDiagram
+  direction LR
+  BED_TERMINAL |o--o{ APP_SESSION : "terminal_id"
+  APP_USER ||--o{ APP_SESSION : "user_id"
+  BED |o..o{ APP_SESSION : "bed_code"
+  APP_USER {
+    integer user_id PK "รหัสผู้ใช้"
+    varchar(50) username UK "ชื่อผู้ใช้ (ตัวเล็ก)"
+  }
+  APP_SESSION {
+    char(64) token PK "Token 64 hex"
+    integer user_id FK "ผู้ใช้"
+    integer terminal_id FK "tablet ที่ session ผูกอยู่"
+    varchar(20) bed_code FK "เตียงที่ session ผูกอยู่"
+  }
+  AUDIT_LOG {
+    bigint audit_id PK "รหัสรายการ"
+  }
+  BED {
+    varchar(20) bed_code PK "→ โมดูล 01 Master & Setting"
+  }
+  BED_TERMINAL {
+    integer terminal_id PK "→ โมดูล 04 Bed Tablet"
+  }
+</pre>
+    </figure>
+    <figcaption>ผังแสดงเฉพาะคอลัมน์ที่เป็นคีย์ (PK / FK / UK) — คอลัมน์ทั้งหมดอยู่ในตารางด้านล่าง · เส้นทึบ = FK จริง · เส้นประ = logical reference · ตารางที่มีคีย์เดียวพร้อมลูกศร = อยู่ในโมดูลอื่น</figcaption>
+    <div class="refs"><b>อ้างอิงข้ามโมดูล:</b> APP_SESSION.bed_code → BED · APP_SESSION.terminal_id → BED_TERMINAL</div>
+    <div class="cards"><details class="tcard" style="--mc:var(--mod-tax)" open><summary><b>APP_USER</b><span>ผู้ใช้งานระบบ — รหัสผ่านเก็บแบบ bcrypt (pgcrypto)</span><i>8 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">user_id</td><td class="t">integer</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสผู้ใช้</td></tr><tr><td class="c">2</td><td class="n">username</td><td class="t">varchar(50)</td><td><span class="k k-UK">UK</span></td><td class="c">NN</td><td class="d">ชื่อผู้ใช้ (ตัวเล็ก)</td></tr><tr><td class="c">3</td><td class="n">full_name</td><td class="t">varchar(120)</td><td></td><td class="c">NN</td><td class="d">ชื่อ-นามสกุล</td></tr><tr><td class="c">4</td><td class="n">role_code</td><td class="t">varchar(20)</td><td></td><td class="c">NN</td><td class="d">บทบาท: ADMIN / NURSE / REGISTER / DOCTOR / VIEWER</td></tr><tr><td class="c">5</td><td class="n">password_hash</td><td class="t">text</td><td></td><td class="c">NN</td><td class="d">crypt(password, gen_salt(&#x27;bf&#x27;))</td></tr><tr><td class="c">6</td><td class="n">active</td><td class="t">boolean</td><td></td><td class="c">NN</td><td class="d">เปิดใช้งาน</td></tr><tr><td class="c">7</td><td class="n">last_login_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">เข้าสู่ระบบล่าสุด</td></tr><tr><td class="c">8</td><td class="n">created_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาสร้าง</td></tr></tbody></table><div class=ck>CHECK: CHECK (((role_code)::text = ANY ((ARRAY[&#x27;ADMIN&#x27;::character varying, &#x27;NURSE&#x27;::character varying, &#x27;REGISTER&#x27;::character varying, &#x27;DOCTOR&#x27;::character varying, &#x27;VIEWER&#x27;::character varying])::text[])))</div></details><details class="tcard" style="--mc:var(--mod-tax)" open><summary><b>APP_SESSION</b><span>Session / token การเข้าสู่ระบบ — terminal_id/bed_code ไม่ว่าง = session ของ tablet (ใช้กับระบบหลักไม่ได้)</span><i>8 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">token</td><td class="t">char(64)</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">Token 64 hex</td></tr><tr><td class="c">2</td><td class="n">user_id</td><td class="t">integer</td><td><span class="k k-FK">FK</span></td><td class="c">NN</td><td class="d">ผู้ใช้<span class=ref>→ app_user.user_id</span></td></tr><tr><td class="c">3</td><td class="n">created_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาสร้าง</td></tr><tr><td class="c">4</td><td class="n">expires_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลาหมดอายุ (tablet: เลื่อนทุกครั้งที่ใช้งาน)</td></tr><tr><td class="c">5</td><td class="n">client_ip</td><td class="t">varchar(64)</td><td></td><td class="c"></td><td class="d">IP</td></tr><tr><td class="c">6</td><td class="n">terminal_id</td><td class="t">integer</td><td><span class="k k-FK">FK</span></td><td class="c"></td><td class="d">tablet ที่ session ผูกอยู่<span class=ref>→ bed_terminal.terminal_id</span></td></tr><tr><td class="c">7</td><td class="n">bed_code</td><td class="t">varchar(20)</td><td><span class="k k-FKs">FK*</span></td><td class="c"></td><td class="d">เตียงที่ session ผูกอยู่<span class=ref>→ bed.bed_code</span></td></tr><tr><td class="c">8</td><td class="n">last_used_at</td><td class="t">timestamptz</td><td></td><td class="c"></td><td class="d">ใช้งานล่าสุด</td></tr></tbody></table></details><details class="tcard" style="--mc:var(--mod-tax)" open><summary><b>AUDIT_LOG</b><span>Audit trail ผ่าน trigger (patient, visit, queue, setting)</span><i>8 cols</i></summary><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Key</th><th>Null</th><th>Description</th></tr></thead><tbody><tr><td class="c">1</td><td class="n">audit_id</td><td class="t">bigint</td><td><span class="k k-PK">PK</span></td><td class="c">NN</td><td class="d">รหัสรายการ</td></tr><tr><td class="c">2</td><td class="n">table_name</td><td class="t">varchar(60)</td><td></td><td class="c">NN</td><td class="d">ตาราง</td></tr><tr><td class="c">3</td><td class="n">row_pk</td><td class="t">varchar(60)</td><td></td><td class="c"></td><td class="d">ค่าคีย์ของแถว</td></tr><tr><td class="c">4</td><td class="n">action</td><td class="t">char(1)</td><td></td><td class="c">NN</td><td class="d">I / U / D</td></tr><tr><td class="c">5</td><td class="n">changed_at</td><td class="t">timestamptz</td><td></td><td class="c">NN</td><td class="d">เวลา</td></tr><tr><td class="c">6</td><td class="n">changed_by</td><td class="t">varchar(50)</td><td></td><td class="c"></td><td class="d">ผู้แก้ไข (จาก er.user)</td></tr><tr><td class="c">7</td><td class="n">old_data</td><td class="t">jsonb</td><td></td><td class="c"></td><td class="d">ข้อมูลก่อนแก้ (jsonb)</td></tr><tr><td class="c">8</td><td class="n">new_data</td><td class="t">jsonb</td><td></td><td class="c"></td><td class="d">ข้อมูลหลังแก้ (jsonb)</td></tr></tbody></table></details></div>
+  </section>
+
+  <!-- ============ FULL ============ -->
+  <section id="m06">
+    <div class="sec-head"><span class="sec-num">06</span><h2>ผังความสัมพันธ์รวม (ทุกตาราง)</h2></div>
+    <p class="sec-sub">แสดงเฉพาะความสัมพันธ์และ cardinality ของทั้ง 26 ตาราง — รายละเอียดคอลัมน์ดูในหัวข้อ 01–05 หรือไฟล์ Excel</p>
+    <figure class="diagram-card">
+<pre class="mermaid">
+erDiagram
+  direction LR
+  BED_TERMINAL |o--o{ APP_SESSION : "terminal_id"
+  APP_USER ||--o{ APP_SESSION : "user_id"
+  BED ||--o{ BED_ASSIGNMENT : "bed_code"
+  VISIT ||--o{ BED_ASSIGNMENT : "visit_id"
+  BED ||--o{ BED_TERMINAL : "bed_code"
+  BED_TERMINAL ||--o{ BED_TERMINAL_PAIRING : "terminal_id"
+  HL7_DEVICE |o--o{ HL7_ALARM : "device_id"
+  VISIT |o--o{ HL7_ALARM : "visit_id"
+  BED |o--o{ HL7_DEVICE : "bed_code"
+  PATIENT |o--o{ PATIENT : "merged_to_hn"
+  VISIT ||--o{ QUEUE : "visit_id"
+  ESI_LEVEL ||--o{ TRIAGE : "esi_level"
+  VISIT ||--o{ TRIAGE : "visit_id"
+  BED |o--o{ VISIT : "bed_code"
+  DISPOSITION_MST |o--o{ VISIT : "disposition_code"
+  ESI_LEVEL |o--o{ VISIT : "esi_level"
+  PATIENT ||--o{ VISIT : "patient_id"
+  STATUS_MST ||--o{ VISIT : "status_code"
+  STATUS_MST ||--o{ VISIT_STATUS_LOG : "status_code"
+  VISIT ||--o{ VISIT_STATUS_LOG : "visit_id"
+  HL7_DEVICE ||--o{ VITAL_LATEST : "device_id"
+  PATIENT ||--o{ WRISTBAND : "patient_id"
+  VISIT |o--o{ WRISTBAND : "visit_id"
+  HL7_DEVICE |o..o{ HL7_MESSAGE : "device_id"
+  VISIT |o..o{ HL7_MESSAGE : "visit_id"
+  VISIT |o..o{ VITAL_SIGN : "visit_id"
+  HL7_DEVICE |o..o{ VITAL_SIGN : "device_id"
+  HL7_OBS_CODE |o..o{ VITAL_SIGN : "obs_code"
+  VISIT |o..o{ VITAL_LATEST : "visit_id"
+  HL7_OBS_CODE |o..o{ VITAL_LATEST : "obs_code"
+  HL7_OBS_CODE |o..o{ HL7_ALARM : "obs_code"
+  PATIENT |o..o{ SCAN_LOG : "patient_id"
+  BED_TERMINAL |o..o{ BED_ACCESS_LOG : "terminal_id"
+  VISIT |o..o{ BED_ACCESS_LOG : "visit_id"
+  BED |o..o{ APP_SESSION : "bed_code"
+</pre>
+    </figure>
+    <figcaption><code>||--o{</code> = 1 ต่อหลาย (FK ห้ามว่าง) · <code>|o--o{</code> = 0..1 ต่อหลาย (FK ว่างได้) · เส้นประ = logical reference</figcaption>
+  </section>
+
+  <!-- ============ CONVENTIONS ============ -->
+  <section id="m07">
+    <div class="sec-head"><span class="sec-num">07</span><h2>ข้อตกลงในการอ่านผัง</h2></div>
+    <div class="conv-grid">
+      <div class="conv-card"><h3>PK / FK / UK</h3><p>Primary / Foreign / Unique key — ชนิดข้อมูลเต็ม (เช่น <code>numeric(12,3)</code>) และ default อยู่ในไฟล์ Excel</p></div>
+      <div class="conv-card"><h3>Partial unique index</h3><p><code>visit(patient_id) WHERE discharge_at IS NULL</code> = ผู้ป่วยมี visit เปิดได้ 1 · <code>visit(bed_code)</code> = เตียงละ 1 คน · <code>bed_terminal(bed_code) WHERE active</code> = เตียงละ 1 tablet</p></div>
+      <div class="conv-card"><h3>Logical reference (FK*)</h3><p>ตาราง partition รายเดือน (<code>hl7_message</code>, <code>vital_sign</code>) และ log ไม่ใส่ FK เพื่อลดภาระ insert ทุกวินาที — ตรวจความถูกต้องใน function</p></div>
+      <div class="conv-card"><h3>HN / barcode</h3><p><code>patient.hn</code> unique · <code>wristband.barcode_value</code> = HN (Code 39) · เลขชั่วคราว <code>ER00001</code> ใช้ <code>merged_to_hn</code> redirect</p></div>
+      <div class="conv-card"><h3>Token / รหัสผ่าน</h3><p>รหัสผ่าน bcrypt · device token และรหัสจับคู่ tablet เก็บเป็น SHA-256 เท่านั้น</p></div>
+      <div class="conv-card"><h3>เวลา</h3><p>ทุกคอลัมน์เวลาเป็น <code>timestamptz</code> · DB timezone = Asia/Bangkok · visit_no ใช้ปี พ.ศ. 2 หลัก</p></div>
+    </div>
+  </section>
+
+  <section id="m08">
+    <div class="sec-head"><span class="sec-num">08</span><h2>ไฟล์ประกอบ</h2></div>
+    <p class="sec-sub">ผังนี้เป็นภาพรวมของโครงสร้าง — รายละเอียดฟิลด์ทุกตัวและสคริปต์สร้างฐานข้อมูลจริงอยู่ในไฟล์แนบ</p>
+    <div class="deliverables">
+      <div class="dl-card"><div class="k">Excel</div><div class="v">Smart_ER_ERD_DataDictionary.xlsx — ทุกตาราง ทุกคอลัมน์ แยกตามโมดูล + Relationships, Indexes, Constraints, Views, Functions, Triggers, Seed data</div></div>
+      <div class="dl-card"><div class="k">SQL</div><div class="v">db/00–08 — PostgreSQL DDL, functions, views, seed, tablet, COMMENT (Data dictionary ใน DB: <code>er.v_data_dictionary</code>)</div></div>
+      <div class="dl-card"><div class="k">HTML</div><div class="v">05_smart-er-postgresql-guide.html — คู่มือติดตั้ง / HL7 / Tablet ประจำเตียง</div></div>
+      <div class="dl-card"><div class="k">HTML</div><div class="v">11_smart-er-db-objects.html — รายการ table / view / function / trigger / index / สิทธิ์ ครบทุก object (สร้างจาก catalog ฐานข้อมูลจริง)</div></div>
+      <div class="dl-card"><div class="k">HTML</div><div class="v">00_smart-er-index.html — สารบัญเอกสารชุด Smart ER ทั้งหมด (workflow, คู่มือผู้ใช้, install, ความเสี่ยง)</div></div>
+    </div>
+  </section>
+
+  <footer>PTS Innovations — Smart ER Data Model Reference · PostgreSQL 16/17 · schema er · สร้างจากฐานข้อมูลจริง 2026-09-26</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'base',
+    er: { fontSize: 13, useMaxWidth: false },
+    flowchart: { curve: 'basis' }
+  });
+</script>
+</body>
+</html>
